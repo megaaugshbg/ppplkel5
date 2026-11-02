@@ -16,3 +16,5 @@ Route::get('/woman-parking', function () {
 
 Route::get('/cari-parkir', [\App\Http\Controllers\ParkirController::class, 'index']);
 Route::get('/check-out', [\App\Http\Controllers\CheckoutController::class, 'index']);
+
+Route::get('/pembayaran', [\App\Http\Controllers\PembayaranController::class, 'index'])->name('pembayaran');
