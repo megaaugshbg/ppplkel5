@@ -9,3 +9,7 @@ Route::get('/', function () {
 
 Route::get('/register', [AppController::class, 'showRegister']);
 Route::post('/register', [AppController::class, 'storeRegister']);
+
+Route::get('/woman-parking', function () {
+    return view('woman-parking');
+});
