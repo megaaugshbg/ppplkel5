@@ -20,7 +20,6 @@ abstract class Controller
             'password' => 'required|min:8|confirmed',
         ]);
 
-        // Belum ada database: data tidak disimpan
         return redirect('/register')->with('sukses', 'Registrasi berhasil (data belum disimpan).');
     }
 }
