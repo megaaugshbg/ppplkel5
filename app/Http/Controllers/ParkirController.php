@@ -2,19 +2,41 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\LokasiParkir;
+use App\Models\SlotParkir;
+use Illuminate\Http\Request;
+
 class ParkirController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $lokasi = [
-            ['nama' => 'Parkir Mall Galaxy', 'alamat' => 'Jl. Dharmahusada Indah, Surabaya', 'tipe' => ['reguler', 'wanita'], 'tarif' => 5000, 'slot' => 24, 'jarak' => 0.8, 'buka' => true],
-            ['nama' => 'Parkir Kampus ITS', 'alamat' => 'Jl. Raya ITS, Sukolilo, Surabaya', 'tipe' => ['reguler'], 'tarif' => 3000, 'slot' => 40, 'jarak' => 1.5, 'buka' => true],
-            ['nama' => 'Parkir Pakuwon Mall', 'alamat' => 'Jl. Mayjend Yono Soewoyo, Surabaya', 'tipe' => ['reguler', 'wanita'], 'tarif' => 6000, 'slot' => 12, 'jarak' => 4.2, 'buka' => false],
-        ];
+        // slot yang masih dipakai booking aktif tidak dihitung tersedia
+        $lokasi = LokasiParkir::with(['slots.bookings' => fn ($q) => $q->aktif()])
+            ->orderBy('jarak') // terdekat lebih dulu
+            ->get()
+            ->map(function (LokasiParkir $l) {
+                $tersedia = $l->slots->filter(fn ($s) => $s->bookings->isEmpty());
 
-        // urutkan dari yang terdekat
-        $lokasi = collect($lokasi)->sortBy('jarak')->values()->all();
+                return [
+                    'id'     => $l->id,
+                    'nama'   => $l->nama,
+                    'alamat' => $l->alamat,
+                    'tarif'  => $l->tarif,
+                    'jarak'  => $l->jarak,
+                    'buka'   => $l->buka,
+                    'tipe'   => $l->slots->pluck('tipe')->unique()->values()->all(),
+                    'slot'   => [
+                        SlotParkir::TIPE_REGULER => $tersedia->where('tipe', SlotParkir::TIPE_REGULER)->count(),
+                        SlotParkir::TIPE_WANITA  => $tersedia->where('tipe', SlotParkir::TIPE_WANITA)->count(),
+                    ],
+                ];
+            })
+            ->all();
 
-        return view('cari-parkir', compact('lokasi'));
+        $tipeAwal = in_array($request->query('tipe'), SlotParkir::TIPE, true)
+            ? $request->query('tipe')
+            : SlotParkir::TIPE_REGULER;
+
+        return view('cari-parkir', compact('lokasi', 'tipeAwal'));
     }
 }

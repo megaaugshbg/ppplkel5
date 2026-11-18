@@ -39,5 +39,7 @@
 
         <button type="submit">Daftar</button>
     </form>
+
+    <p>Sudah punya akun? <a href="/login">Masuk</a></p>
 </body>
 </html>

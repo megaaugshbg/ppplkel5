@@ -11,7 +11,8 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        //
+        // pengguna yang sudah login dan membuka /login atau /register diarahkan ke pencarian parkir
+        $middleware->redirectUsersTo('/cari-parkir');
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

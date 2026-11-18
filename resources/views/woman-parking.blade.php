@@ -12,6 +12,9 @@
         dengan pintu masuk dan lebih mudah diawasi.
     </p>
 
-    <button>Lihat Slot Tersedia</button>
+    <form method="GET" action="/cari-parkir">
+        <input type="hidden" name="tipe" value="wanita">
+        <button type="submit">Lihat Slot Tersedia</button>
+    </form>
 </body>
 </html>

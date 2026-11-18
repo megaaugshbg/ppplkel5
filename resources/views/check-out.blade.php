@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Markir.In - Check-out</title>
     <style>
         body { font-family: sans-serif; margin: 0; background: #fff; color: #1f2937; }
@@ -17,6 +18,10 @@
         input[type=text] { padding: 10px; border: 1px solid #1e40af; border-radius: 6px; font-size: 15px; width: 100%; margin: 8px 0; }
         .info { padding: 12px 16px; border-radius: 6px; margin: 12px 0; display: none; }
         .info.warn { background: #fef3c7; color: #92400e; }
+        .flash { padding: 12px 16px; border-radius: 6px; margin: 12px 0; }
+        .flash.ok { background: #dcfce7; color: #166534; }
+        .flash.err { background: #fef3c7; color: #92400e; }
+        a.btn { text-decoration: none; display: inline-block; }
         .hint { color: #6b7280; font-size: 14px; }
         .step { display: none; }
         .step.aktif { display: block; }
@@ -30,21 +35,41 @@
         <!-- Halaman 1: Booking Aktif -->
         <div id="stepAktif" class="step aktif">
             <h1>Booking Aktif</h1>
-            <div class="card">
-                <h3>{{ $booking['lokasi'] }}</h3>
-                <p>Slot: {{ $booking['slot'] }}</p>
-                <p>Kode booking: {{ $booking['kode'] }}</p>
-                <p>Status: Parkir berlangsung</p>
-            </div>
-            <button class="btn" id="btnParkir">Parkir Berlangsung</button>
+            @if (session('sukses'))
+                <div class="flash ok">{{ session('sukses') }}</div>
+            @endif
+            @if (session('error'))
+                <div class="flash err">{{ session('error') }}</div>
+            @endif
+
+            @if ($booking)
+                <div class="card">
+                    <h3>{{ $booking->slot->lokasi->nama }}</h3>
+                    <p>Slot: {{ $booking->slot->kode }}</p>
+                    <p>Plat nomor: {{ $booking->plat_nomor }}</p>
+                    <p>Kode booking: {{ $booking->kode }}</p>
+                    <p>Status: {{ $booking->status === 'dipesan' ? 'Menunggu check-in' : 'Parkir berlangsung' }}</p>
+                </div>
+                @if ($booking->status === 'dipesan')
+                    <form method="POST" action="/booking/{{ $booking->kode }}/check-in">
+                        @csrf
+                        <button type="submit" class="btn">Check-in</button>
+                    </form>
+                @else
+                    <button class="btn" id="btnParkir">Parkir Berlangsung</button>
+                @endif
+            @else
+                <p>Anda belum punya booking aktif.</p>
+                <a class="btn" href="/cari-parkir">Cari Lokasi Parkir</a>
+            @endif
         </div>
 
         <!-- Halaman 2: Check-out (scan barcode) -->
         <div id="stepScan" class="step">
             <h1>Check-out</h1>
             <p>Pindai barcode booking Anda.</p>
-            <input type="text" id="barcode" placeholder="Masukkan kode barcode, contoh: MKR-001">
-            <p class="hint">Contoh uji: MKR-001 (berhasil), MKR-002 (belum check-in), MKR-999 (tidak ditemukan), abc (tidak valid).</p>
+            <input type="text" id="barcode" placeholder="Masukkan kode barcode{{ $booking ? ', contoh: ' . $booking->kode : '' }}">
+            <p class="hint">Kode yang salah, tidak ditemukan, atau belum check-in akan ditolak.</p>
             <label><input type="checkbox" id="offline"> Simulasikan koneksi terputus</label>
             <div id="pesan" class="info warn"></div>
             <p>
@@ -62,16 +87,14 @@
                 <p>Durasi parkir: <strong id="hDurasi"></strong></p>
                 <p>Total biaya: <strong id="hTotal"></strong></p>
             </div>
-            <button class="btn sec" id="btnStruk">Lihat Struk</button>
-            <button class="btn" id="btnSelesai">Selesai</button>
+            <a class="btn" id="btnBayar" href="/pembayaran">Lanjut ke Pembayaran</a>
+            <button class="btn sec" id="btnSelesai">Selesai</button>
         </div>
 
     </main>
     <footer>Dikerjakan oleh: Raditya Prazenko Reswara</footer>
 
     <script>
-        var data = @json($dataBooking);
-
         var steps = ['stepAktif', 'stepScan', 'stepBerhasil'];
         function tampil(id) {
             steps.forEach(function (s) {
@@ -98,40 +121,47 @@
                 error('Gagal memproses check-out, silakan coba lagi.', true);
                 return;
             }
-            if (!/^MKR-[0-9]{3}$/.test(kode)) {
-                error('Barcode tidak valid. Silakan lakukan pemindaian ulang.', false);
-                return;
-            }
-            if (!data[kode]) {
-                error('Booking tidak ditemukan. Silakan periksa kembali barcode yang digunakan.', false);
-                return;
-            }
-            if (!data[kode].sudah_checkin) {
-                error('Anda belum melakukan check-in, sehingga check-out tidak dapat dilakukan.', false);
-                return;
-            }
 
-            var b = data[kode];
-            document.getElementById('hLokasi').textContent = b.lokasi;
-            document.getElementById('hKeluar').textContent = b.keluar;
-            document.getElementById('hDurasi').textContent = b.durasi + ' jam';
-            document.getElementById('hTotal').textContent = 'Rp ' + (b.tarif * b.durasi).toLocaleString('id-ID');
-            tampil('stepBerhasil');
+            // validasi dan penyimpanan check-out dilakukan di server (CheckoutController@proses)
+            fetch('/check-out', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content
+                },
+                body: JSON.stringify({ kode: kode })
+            }).then(function (res) {
+                if (res.status === 401) { window.location.href = '/login'; return null; }
+                return res.json().then(function (body) { return { ok: res.ok, body: body }; });
+            }).then(function (r) {
+                if (!r) { return; }
+                if (!r.ok) {
+                    error(r.body.pesan || 'Gagal memproses check-out, silakan coba lagi.', false);
+                    return;
+                }
+                var b = r.body;
+                document.getElementById('hLokasi').textContent = b.lokasi;
+                document.getElementById('hKeluar').textContent = b.keluar;
+                document.getElementById('hDurasi').textContent = b.durasi + ' jam';
+                document.getElementById('hTotal').textContent = 'Rp ' + b.total.toLocaleString('id-ID');
+                document.getElementById('btnBayar').href = b.bayar_url;
+                tampil('stepBerhasil');
+            }).catch(function () {
+                error('Gagal memproses check-out, silakan coba lagi.', true);
+            });
         }
 
-        document.getElementById('btnParkir').addEventListener('click', function () { tampil('stepScan'); });
+        var btnParkir = document.getElementById('btnParkir');
+        if (btnParkir) { btnParkir.addEventListener('click', function () { tampil('stepScan'); }); }
         document.getElementById('btnScan').addEventListener('click', proses);
         btnUlang.addEventListener('click', function () {
             document.getElementById('offline').checked = false;
             proses();
         });
-        document.getElementById('btnStruk').addEventListener('click', function () {
-            alert('Struk check-out (contoh). Fitur struk belum dibuat.');
-        });
         document.getElementById('btnSelesai').addEventListener('click', function () {
-            document.getElementById('barcode').value = '';
-            pesan.style.display = 'none';
-            tampil('stepAktif');
+            // muat ulang agar Booking Aktif menampilkan kondisi terbaru dari database
+            window.location.href = '/check-out';
         });
     </script>
 </body>

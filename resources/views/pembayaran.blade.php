@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Markir.In - Pembayaran</title>
     <style>
         body { font-family: sans-serif; margin: 0; background: #fff; color: #1f2937; }
@@ -114,8 +115,29 @@
                 return;
             }
 
-            document.getElementById('sMetode').textContent = pilih.value;
-            tampil('stepStatus');
+            // simpan pembayaran ke database (PembayaranController@bayar)
+            fetch('/pembayaran/{{ $booking['kode'] }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content
+                },
+                body: JSON.stringify({ metode: pilih.value })
+            }).then(function (res) {
+                if (res.status === 401) { window.location.href = '/login'; return null; }
+                return res.json().then(function (body) { return { ok: res.ok, body: body }; });
+            }).then(function (r) {
+                if (!r) { return; }
+                if (!r.ok) {
+                    error(r.body.pesan || 'Pembayaran gagal diproses. Silakan coba lagi.');
+                    return;
+                }
+                document.getElementById('sMetode').textContent = r.body.metode;
+                tampil('stepStatus');
+            }).catch(function () {
+                error('Pembayaran gagal diproses. Silakan coba lagi.');
+            });
         });
 
         document.getElementById('btnBatal').addEventListener('click', function () {
@@ -128,8 +150,14 @@
         });
 
         document.getElementById('btnSelesai').addEventListener('click', function () {
-            window.location.href = '/';
+            window.location.href = '/cari-parkir';
         });
+
+        @if ($pembayaran)
+            // tagihan ini sudah dibayar: langsung tampilkan status
+            document.getElementById('sMetode').textContent = @json($pembayaran->metode);
+            tampil('stepStatus');
+        @endif
     </script>
 </body>
 </html>

@@ -17,6 +17,9 @@
         .btn { background: #1e40af; color: #fff; padding: 12px 24px; border: 0; border-radius: 8px; font-size: 16px; cursor: pointer; text-decoration: none; }
         .btn.sec { background: #fff; color: #1e40af; border: 1px solid #1e40af; }
         .btn.off { background: #9ca3af; }
+        header { display: flex; justify-content: space-between; align-items: center; }
+        header nav { font-size: 15px; font-weight: normal; display: flex; gap: 12px; align-items: center; }
+        header nav a, header nav button { color: #fff; background: none; border: 0; font-size: 15px; cursor: pointer; text-decoration: underline; padding: 0; }
         .map { background: #dbeafe; border: 2px dashed #93c5fd; border-radius: 12px; height: 160px; display: flex; align-items: center; justify-content: center; color: #1e40af; margin: 16px 0; }
         .card { background: #fff; padding: 20px; border-radius: 12px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; gap: 16px; }
         .card h3 { margin: 0 0 4px; }
@@ -31,7 +34,22 @@
     </style>
 </head>
 <body>
-    <header>Markir.In</header>
+    <header>
+        <span>Markir.In</span>
+        <nav>
+            @auth
+                <span>{{ auth()->user()->name }}</span>
+                <a href="/check-out">Booking Saya</a>
+                <form method="POST" action="/logout" style="margin:0;">
+                    @csrf
+                    <button type="submit">Keluar</button>
+                </form>
+            @else
+                <a href="/login">Masuk</a>
+                <a href="/register">Daftar</a>
+            @endauth
+        </nav>
+    </header>
     <main>
         <h1>Cari Lokasi Parkir</h1>
         <p class="sub">Pilih tipe parkir, lalu temukan lahan parkir terdekat.</p>
@@ -39,15 +57,16 @@
         <div class="search">
             <input type="text" id="keyword" placeholder="Cari nama lokasi atau mall...">
             <select id="tipe">
-                <option value="reguler">Parkir Reguler</option>
-                <option value="wanita">Woman Parking</option>
+                <option value="reguler" @selected($tipeAwal === 'reguler')>Parkir Reguler</option>
+                <option value="wanita" @selected($tipeAwal === 'wanita')>Woman Parking</option>
             </select>
             <button class="btn sec" id="btnGps" type="button">Gunakan lokasi saya</button>
         </div>
 
         <div class="map">Peta sekitar lokasi Penyewa (placeholder)</div>
 
-        <div id="pesan" class="info"></div>
+        @php($flash = session('sukses') ?? session('error'))
+        <div id="pesan" class="info {{ session('sukses') ? 'ok' : 'warn' }}" @if ($flash) style="display:block" @endif>{{ $flash }}</div>
 
         <div id="daftar">
             @foreach ($lokasi as $l)
@@ -55,6 +74,9 @@
                      data-teks="{{ strtolower($l['nama'].' '.$l['alamat']) }}"
                      data-tipe="{{ implode(' ', $l['tipe']) }}"
                      data-buka="{{ $l['buka'] ? 1 : 0 }}"
+                     data-id="{{ $l['id'] }}"
+                     data-slot-reguler="{{ $l['slot']['reguler'] }}"
+                     data-slot-wanita="{{ $l['slot']['wanita'] }}"
                      data-nama="{{ $l['nama'] }}">
                     <div>
                         <h3>{{ $l['nama'] }}</h3>
@@ -62,12 +84,12 @@
                         <p>Rp {{ number_format($l['tarif'], 0, ',', '.') }} / jam
                             <span class="jarak"> &middot; {{ $l['jarak'] }} km</span></p>
                         @if ($l['buka'])
-                            <span class="badge">{{ $l['slot'] }} slot tersedia</span>
+                            <span class="badge" data-badge></span>
                         @else
                             <span class="badge tutup">Sedang tutup</span>
                         @endif
                     </div>
-                    <a href="#" class="btn pilih {{ $l['buka'] ? '' : 'off' }}">Pilih</a>
+                    <a href="/lokasi/{{ $l['id'] }}/slot" class="btn pilih {{ $l['buka'] ? '' : 'off' }}">Pilih</a>
                 </div>
             @endforeach
         </div>
@@ -97,6 +119,13 @@
                 var cocok = c.dataset.teks.indexOf(k) !== -1 && c.dataset.tipe.split(' ').indexOf(t) !== -1;
                 c.style.display = cocok ? 'flex' : 'none';
                 if (cocok) n++;
+
+                var badge = c.querySelector('[data-badge]');
+                if (badge) {
+                    var sisa = parseInt(c.getAttribute('data-slot-' + t), 10);
+                    badge.textContent = sisa > 0 ? sisa + ' slot tersedia' : 'Slot penuh';
+                    badge.classList.toggle('tutup', sisa === 0);
+                }
             });
             kosong.style.display = n ? 'none' : 'block';
         }
@@ -109,8 +138,10 @@
                 e.preventDefault();
                 if (c.dataset.buka === '0') {
                     tampilPesan('Lokasi parkir sedang tutup. Silakan pilih lahan parkir lain.', 'warn');
+                } else if (parseInt(c.getAttribute('data-slot-' + tipe.value), 10) === 0) {
+                    tampilPesan('Slot di lokasi ini sedang penuh. Silakan pilih lahan parkir lain.', 'warn');
                 } else {
-                    tampilPesan('Lahan parkir dipilih: ' + c.dataset.nama + '. Lanjut ke Pilih Slot (belum dibuat).', 'ok');
+                    window.location.href = '/lokasi/' + c.dataset.id + '/slot?tipe=' + tipe.value;
                 }
             });
         });
