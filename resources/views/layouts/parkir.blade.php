@@ -53,7 +53,6 @@
             <a href="/home" class="logo"><x-logo :height="40" /></a>
             <nav>
                 <a href="/home">Beranda</a>
-                <a href="/cari-parkir" class="aktif">Cari Parkir</a>
             </nav>
         </div>
     </div>

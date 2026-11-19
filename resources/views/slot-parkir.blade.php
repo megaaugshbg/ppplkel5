@@ -2,7 +2,7 @@
 
 @section('judul', 'Pilih Slot Parkir')
 @section('deskripsi', $lokasi['nama'] . ' · ' . $lokasi['alamat'])
-@section('kembali', '/cari-parkir')
+@section('kembali', route('lokasi.tipe', $lokasi['id']))
 
 @section('style')
     .lantai-nav { display: flex; align-items: center; justify-content: center; gap: 18px; margin-bottom: 6px; }
@@ -29,6 +29,8 @@
     .total { display: flex; justify-content: space-between; align-items: center; margin: 14px 0; }
     .total strong { color: var(--color-primary); font-size: 20px; }
     .simulasi { font-size: 12px; color: #6b7280; margin: 0 0 14px; }
+    .btn:disabled { background: var(--color-surface-alt); color: var(--color-primary); opacity: .6; cursor: not-allowed; }
+    .segera { text-align: center; font-size: 13px; font-weight: 600; color: var(--color-primary); margin: 8px 0 12px; }
     @media (max-width: 640px) { .panel.aktif { gap: 12px 24px; } }
 @endsection
 
@@ -38,10 +40,10 @@
     @endif
 
     @if ($tersedia === 0)
-        <div class="info warn">Tidak ada slot parkir yang tersedia. Silakan pilih lokasi lain.</div>
-        <a href="/cari-parkir" class="btn sec" style="max-width:220px">Kembali</a>
+        <div class="info warn">Tidak ada slot parkir yang tersedia. Silakan pilih tipe atau lokasi lain.</div>
+        <a href="{{ route('lokasi.tipe', $lokasi['id']) }}" class="btn sec" style="max-width:220px">Kembali</a>
     @else
-        <form method="POST" action="/pesan-slot" class="grid">
+        <form method="POST" action="{{ route('pesan-slot') }}" class="grid">
             @csrf
             <input type="hidden" name="lokasi" value="{{ $lokasi['id'] }}">
             <input type="hidden" name="tipe" value="{{ $tipe }}">
@@ -91,10 +93,16 @@
                     <strong>Rp {{ number_format($lokasi['tarif'], 0, ',', '.') }} / jam</strong>
                 </div>
 
-                <p class="simulasi"><label><input type="checkbox" name="gagal" value="1"> Simulasikan gagal menyimpan pesanan</label></p>
+                @if ($bisaPesan)
+                    <p class="simulasi"><label><input type="checkbox" name="gagal" value="1"> Simulasikan gagal menyimpan pesanan</label></p>
 
-                <button type="submit" class="btn">Pesan Slot</button>
-                <a href="/cari-parkir" class="btn sec">Batal</a>
+                    <button type="submit" class="btn">Pesan Slot</button>
+                @else
+                    {{-- Priority & EV: denah boleh dilihat, pemesanan belum dibuka. --}}
+                    <button type="submit" class="btn" disabled aria-describedby="ket-segera">Pesan Slot</button>
+                    <p id="ket-segera" class="segera">Segera hadir</p>
+                @endif
+                <a href="{{ route('lokasi.tipe', $lokasi['id']) }}" class="btn sec">Batal</a>
             </aside>
         </form>
     @endif

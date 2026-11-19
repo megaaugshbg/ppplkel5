@@ -6,6 +6,7 @@ use App\Models\LokasiParkir;
 use App\Models\SlotParkir;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * ==========================================================================
@@ -21,6 +22,9 @@ use Illuminate\Support\Facades\DB;
  *    Kolom `buka` (penutupan manual) tidak pernah ditimpa.
  *  - Slot: hanya DITAMBAH sampai jumlah target per tipe. Slot yang sudah ada
  *    tidak pernah dihapus dan statusnya tidak diubah.
+ *  - Lantai: semua slot mal dibagi ulang ke lantai (maks. SLOT_PER_LANTAI per
+ *    lantai; Woman, Priority, EV di lantai bawah dekat pintu). Yang diubah
+ *    HANYA kolom `lantai`. Hasilnya selalu sama, jadi aman diulang.
  *
  *  Jalankan: php artisan db:seed --class=LahanParkirSurabayaDummySeeder
  * ==========================================================================
@@ -38,10 +42,26 @@ class LahanParkirSurabayaDummySeeder extends Seeder
     /** Dummy: setiap slot baru ke-N per tipe dibuat 'terisi' agar ketersediaan bervariasi. */
     private const SETIAP_KE_TERISI = 4;
 
+    /** Maksimal slot per lantai per mal. */
+    private const SLOT_PER_LANTAI = 12;
+
+    /** Urutan tipe dari lantai bawah ke atas: slot khusus dekat pintu masuk. */
+    private const URUTAN_LANTAI = [
+        SlotParkir::TIPE_WANITA,
+        SlotParkir::TIPE_PRIORITAS,
+        SlotParkir::TIPE_EV,
+        SlotParkir::TIPE_REGULER,
+    ];
+
     public function run(): void
     {
+        $adaKolomLantai = Schema::hasColumn('slot_parkir', 'lantai');
+        if (! $adaKolomLantai) {
+            $this->command?->warn('Kolom slot_parkir.lantai belum ada: jalankan "php artisan migrate" dulu. Pembagian lantai dilewati.');
+        }
+
         foreach ($this->data() as $row) {
-            DB::transaction(function () use ($row) {
+            DB::transaction(function () use ($row, $adaKolomLantai) {
                 $target = $row['slot'];
                 unset($row['slot']);
 
@@ -51,6 +71,10 @@ class LahanParkirSurabayaDummySeeder extends Seeder
                 );
 
                 $this->isiSlotSampaiTarget($lokasi, $target);
+
+                if ($adaKolomLantai) {
+                    $this->bagiLantai($lokasi);
+                }
             });
         }
     }
@@ -93,6 +117,37 @@ class LahanParkirSurabayaDummySeeder extends Seeder
 
         foreach (array_chunk($baru, 200) as $potongan) {
             SlotParkir::insert($potongan);
+        }
+    }
+
+    /**
+     * Bagi semua slot mal ke lantai: urut tipe (URUTAN_LANTAI) lalu nomor kode,
+     * tiap SLOT_PER_LANTAI slot naik satu lantai. Hanya kolom `lantai` yang
+     * di-update, dan hanya untuk slot yang lantainya berubah.
+     */
+    private function bagiLantai(LokasiParkir $lokasi): void
+    {
+        $urutTipe = array_flip(self::URUTAN_LANTAI);
+
+        $slot = $lokasi->slots()->get(['id', 'kode', 'tipe', 'lantai'])
+            ->sortBy(fn (SlotParkir $s) => sprintf(
+                '%d-%06d-%s',
+                $urutTipe[$s->tipe] ?? 99,
+                (int) preg_replace('/\D/', '', $s->kode),
+                $s->kode,
+            ))
+            ->values();
+
+        $pindah = []; // lantai => [id, ...]
+        foreach ($slot as $i => $s) {
+            $lantai = intdiv($i, self::SLOT_PER_LANTAI) + 1;
+            if ($s->lantai !== $lantai) {
+                $pindah[$lantai][] = $s->id;
+            }
+        }
+
+        foreach ($pindah as $lantai => $ids) {
+            SlotParkir::whereIn('id', $ids)->update(['lantai' => $lantai]);
         }
     }
 

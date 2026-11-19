@@ -2,7 +2,7 @@
 
 @section('judul', 'Slot Berhasil Dipesan')
 @section('deskripsi', 'Simpan kode booking kamu, lalu lanjutkan ke pembayaran.')
-@section('kembali', '/cari-parkir')
+@section('kembali', '/home')
 
 @section('style')
     .baris { display: flex; justify-content: space-between; gap: 16px; padding: 10px 0; border-bottom: 1px solid var(--color-line); font-size: 14px; }

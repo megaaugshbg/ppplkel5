@@ -9,10 +9,16 @@
     $jarak = $mal['jarak'];
     $teksJarak = $jarak === null ? null
         : ($jarak < 1 ? number_format($jarak * 1000, 0, ',', '.') . ' m' : number_format($jarak, 1, ',', '.') . ' km');
+
+    // Mal yang sedang tutup tidak bisa diklik.
+    $tag = $mal['buka'] ? 'a' : 'div';
+    $kelas = 'group flex w-[16.5rem] shrink-0 flex-col overflow-hidden rounded-2xl border border-line bg-surface shadow-sm md:w-full '
+        . ($mal['buka']
+            ? 'transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus'
+            : 'cursor-not-allowed');
 @endphp
 
-<a href="{{ $mal['url'] }}"
-   class="group flex w-[16.5rem] shrink-0 flex-col overflow-hidden rounded-2xl border border-line bg-surface shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus md:w-full">
+<{{ $tag }} @if ($mal['buka']) href="{{ $mal['url'] }}" @else aria-disabled="true" @endif class="{{ $kelas }}">
 
     <div class="relative aspect-[16/10] bg-surface-alt">
         <img src="{{ $mal['foto'] }}" alt="" loading="lazy"
@@ -56,4 +62,4 @@
             </ul>
         @endif
     </div>
-</a>
+</{{ $tag }}>

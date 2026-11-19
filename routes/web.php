@@ -2,7 +2,9 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\SlotController;
 use App\Http\Controllers\WomanParkingController;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/login');
@@ -23,10 +25,14 @@ Route::middleware('auth')->group(function () {
     Route::get('/woman-parking', [WomanParkingController::class, 'index'])->name('woman-parking.index');
     Route::get('/woman-parking/create', [WomanParkingController::class, 'create'])->name('woman-parking.create');
     Route::post('/woman-parking', [WomanParkingController::class, 'store'])->name('woman-parking.store');
+
+    // Pilih Tipe Slot, Cari Slot Parkir (denah), Pesan Slot Parkir
+    Route::get('/lokasi/{lokasi}/tipe', [SlotController::class, 'pilihTipe'])->whereNumber('lokasi')->name('lokasi.tipe');
+    Route::get('/slot-parkir/{lokasi}', [SlotController::class, 'index'])->whereNumber('lokasi')->name('slot-parkir');
+    Route::post('/pesan-slot', [SlotController::class, 'pesan'])->name('pesan-slot');
 });
 
-// Cari Lokasi Parkir, Cari Slot Parkir, Pesan Slot Parkir
-Route::get('/cari-parkir', [\App\Http\Controllers\ParkirController::class, 'index']);
-Route::get('/slot-parkir/{lokasi}', [\App\Http\Controllers\SlotController::class, 'index'])->whereNumber('lokasi');
-Route::post('/pesan-slot', [\App\Http\Controllers\SlotController::class, 'pesan']);
-Route::get('/konfirmasi-pesanan', [\App\Http\Controllers\SlotController::class, 'konfirmasi']);
+// Halaman Cari Lokasi sudah digantikan beranda; tautan lama diarahkan ke /home.
+// (Route::redirect membuang query string, jadi ?q= diteruskan manual.)
+Route::get('/cari-parkir', fn (Request $request) => redirect()->route('home', $request->query()));
+Route::get('/konfirmasi-pesanan', [SlotController::class, 'konfirmasi']);

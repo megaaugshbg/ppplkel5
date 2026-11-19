@@ -37,7 +37,12 @@ class SlotParkir extends Model
 
     protected $table = 'slot_parkir';
 
-    protected $fillable = ['lokasi_parkir_id', 'kode', 'tipe', 'status'];
+    protected $fillable = ['lokasi_parkir_id', 'kode', 'tipe', 'lantai', 'status'];
+
+    protected function casts(): array
+    {
+        return ['lantai' => 'integer'];
+    }
 
     public function lokasi(): BelongsTo
     {

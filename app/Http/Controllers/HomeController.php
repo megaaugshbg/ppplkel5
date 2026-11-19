@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\LokasiParkir;
 use App\Models\SlotParkir;
-use App\Support\ParkirData;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Schema;
@@ -72,8 +71,6 @@ class HomeController extends Controller
     /** Kartu mal untuk kota terpilih, sudah difilter, diberi jarak, dan diurutkan. */
     private function daftarMal(string $kota, ?string $tipe, string $q, ?array $posisi, ?string $urut): Collection
     {
-        $petaParkirData = $this->petaParkirData();
-
         $hasil = LokasiParkir::kota($kota)
             ->denganJumlahSlot()
             ->when($tipe, fn ($query) => $query->tersediaTipe($tipe))
@@ -82,7 +79,7 @@ class HomeController extends Controller
                 $query->where(fn ($w) => $w->where('nama', 'like', $like)->orWhere('area', 'like', $like));
             })
             ->get()
-            ->map(function (LokasiParkir $l) use ($tipe, $posisi, $petaParkirData) {
+            ->map(function (LokasiParkir $l) use ($tipe, $posisi) {
                 $ringkasan = $l->ringkasan_slot;
 
                 return [
@@ -99,44 +96,13 @@ class HomeController extends Controller
                         ? $ringkasan[$tipe]['tersedia']
                         : array_sum(array_column($ringkasan, 'tersedia')),
                     'tipeKosong' => array_keys(array_filter($ringkasan, fn ($r) => $r['tersedia'] > 0)),
-                    'url'       => $this->urlLahan($l, $tipe, $petaParkirData),
+                    'url'       => route('lokasi.tipe', $l->id),
                 ];
             });
 
         return $urut === 'jarak'
             ? $hasil->sortBy(fn ($m) => $m['jarak'] ?? INF)->values()
             : $hasil->sortBy(fn ($m) => ($m['buka'] ? '0' : '1') . mb_strtolower($m['nama']))->values();
-    }
-
-    /**
-     * JEMBATAN SEMENTARA.
-     * Halaman /slot-parkir/{id} dan /cari-parkir masih memakai data hardcode
-     * App\Support\ParkirData (ID 1-3), BUKAN tabel lokasi_parkir, sehingga ID-nya
-     * tidak sama. Lahan yang namanya sama persis dengan entri ParkirData diarahkan
-     * ke /slot-parkir/{id ParkirData}; sisanya ke /cari-parkir?q={nama}.
-     * Hapus fungsi ini (dan petaParkirData) setelah SlotController memakai tabel
-     * lokasi_parkir; ganti dengan url('/slot-parkir/' . $l->id).
-     */
-    private function urlLahan(LokasiParkir $l, ?string $tipe, array $petaParkirData): string
-    {
-        $idLama = $petaParkirData[mb_strtolower($l->nama)] ?? null;
-
-        if ($idLama === null) {
-            return url('/cari-parkir') . '?' . http_build_query(['q' => $l->nama]);
-        }
-
-        // Halaman slot lama hanya mengenal tipe reguler & wanita.
-        $tipeLama = array_key_exists((string) $tipe, ParkirData::tipe()) ? $tipe : 'reguler';
-
-        return url('/slot-parkir/' . $idLama) . '?' . http_build_query(['tipe' => $tipeLama]);
-    }
-
-    /** JEMBATAN SEMENTARA: [nama huruf kecil => id ParkirData]. Lihat urlLahan(). */
-    private function petaParkirData(): array
-    {
-        return collect(ParkirData::lokasi())
-            ->mapWithKeys(fn ($d) => [mb_strtolower($d['nama']) => $d['id']])
-            ->all();
     }
 
     /** Kota dari session jika masih ada di data; jika tidak, Surabaya, lalu kota pertama. */

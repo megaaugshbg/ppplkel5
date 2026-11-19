@@ -5,6 +5,10 @@
 @section('content')
     <div class="mx-auto max-w-6xl space-y-6 px-4 pt-5 md:space-y-8 md:px-6 md:pt-8">
 
+        @if (session('pesan'))
+            <div role="status" class="rounded-2xl border border-line bg-surface-alt px-5 py-3 text-sm font-medium">{{ session('pesan') }}</div>
+        @endif
+
         {{-- Sapaan + pemilih kota --}}
         <div class="flex flex-wrap items-end justify-between gap-3">
             <div>
@@ -37,7 +41,7 @@
             @if (! $tabelSiap || ! $kota)
                 <div class="rounded-3xl border-2 border-dashed border-line bg-surface px-6 py-12 text-center">
                     <p class="text-base font-semibold">Data lahan parkir belum tersedia</p>
-                    <p class="mt-1 text-sm text-slate-500">Coba lagi nanti, atau buka halaman <a href="{{ url('/cari-parkir') }}" class="font-semibold text-primary underline underline-offset-4">Cari Lokasi Parkir</a>.</p>
+                    <p class="mt-1 text-sm text-slate-500">Silakan coba lagi nanti.</p>
                 </div>
             @elseif ($mal->isEmpty())
                 <div class="rounded-3xl border-2 border-dashed border-line bg-surface px-6 py-12 text-center">
