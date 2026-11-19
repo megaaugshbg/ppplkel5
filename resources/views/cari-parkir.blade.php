@@ -5,22 +5,22 @@
 
 @section('style')
     .cari { display: flex; gap: 10px; margin-bottom: 18px; }
-    .cari input { flex: 1; min-width: 0; padding: 13px 18px; border: 1px solid var(--garis); background: #fff; border-radius: 999px; font-size: 15px; outline: none; }
-    .cari input:focus { border-color: var(--biru); }
-    .gps { background: #fff; border: 1px solid var(--biru); color: var(--biru); border-radius: 999px; padding: 0 20px; font-size: 14px; font-weight: 600; cursor: pointer; white-space: nowrap; }
-    .gps:hover { background: var(--pucat); }
+    .cari input { flex: 1; min-width: 0; padding: 13px 18px; border: 1px solid var(--color-line); background: var(--color-surface); border-radius: 999px; font-size: 15px; outline: none; }
+    .cari input:focus { border-color: var(--color-focus); box-shadow: 0 0 0 3px var(--color-primary-soft); }
+    .gps { background: var(--color-surface); border: 1px solid var(--color-primary); color: var(--color-primary); border-radius: 999px; padding: 0 20px; font-size: 14px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+    .gps:hover { background: var(--color-primary-soft); }
     #daftar { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
     .lokasi { display: flex; flex-direction: column; gap: 12px; padding: 18px; }
     .lokasi .atas { display: flex; gap: 12px; }
-    .ikon { flex: none; width: 48px; height: 48px; border-radius: 12px; background: var(--navy); color: #fff; font-weight: 900; font-size: 22px; display: flex; align-items: center; justify-content: center; }
+    .ikon { flex: none; width: 48px; height: 48px; border-radius: 12px; background: var(--color-primary); color: var(--color-on-primary); font-weight: 900; font-size: 22px; display: flex; align-items: center; justify-content: center; }
     .lokasi.tutup .ikon { background: #9ca3af; }
-    .lokasi h3 { margin: 0; font-size: 16px; color: var(--navy); }
+    .lokasi h3 { margin: 0; font-size: 16px; color: var(--color-primary); }
     .lokasi p { margin: 3px 0 0; font-size: 13px; color: #6b7280; }
     .meta { display: flex; flex-wrap: wrap; gap: 6px; }
-    .chip { font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px; background: var(--pucat); border: 1px solid var(--garis); color: var(--navy); }
+    .chip { font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px; background: var(--color-primary-soft); border: 1px solid var(--color-line); color: var(--color-primary); }
     .chip.hijau { background: #d1fae5; border-color: #a7f3d0; color: #065f46; }
     .chip.merah { background: #fee2e2; border-color: #fecaca; color: #b91c1c; }
-    .map { background: var(--pucat); border: 2px dashed #93abf0; border-radius: 12px; height: 260px; display: flex; align-items: center; justify-content: center; text-align: center; padding: 16px; color: var(--navy); font-size: 14px; }
+    .map { background: var(--color-primary-soft); border: 2px dashed var(--color-line); border-radius: 12px; height: 260px; display: flex; align-items: center; justify-content: center; text-align: center; padding: 16px; color: var(--color-primary); font-size: 14px; }
     .panel-samping ul { margin: 14px 0 0; padding-left: 18px; color: #4b5563; font-size: 13px; line-height: 1.7; }
     #kosong { display: none; text-align: center; color: #6b7280; padding: 32px; font-size: 15px; }
     @media (max-width: 640px) { #daftar { grid-template-columns: 1fr; } }

@@ -3,7 +3,7 @@
 @section('title', 'Daftar - Markir.In')
 
 @php
-    $field = 'w-full rounded-lg border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200';
+    $field = 'w-full rounded-lg border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-focus focus:ring-2 focus:ring-focus/20';
 @endphp
 
 @section('content')
@@ -42,7 +42,7 @@
         <div>
             <label for="no_hp" class="mb-1 block text-sm font-medium">Nomor HP</label>
             <div class="flex">
-                <span class="flex items-center rounded-l-lg border border-r-0 border-slate-200 bg-brand-100 px-3 text-sm text-slate-600">+62</span>
+                <span class="flex items-center rounded-l-lg border border-r-0 border-slate-200 bg-surface-alt px-3 text-sm text-slate-600">+62</span>
                 <input id="no_hp" name="no_hp" value="{{ old('no_hp') }}" inputmode="tel" autocomplete="tel-national" placeholder="81234567890"
                        class="{{ $field }} rounded-l-none">
             </div>
@@ -67,13 +67,13 @@
         </div>
 
         <button type="submit"
-                class="w-full rounded-lg bg-brand-500 px-4 py-3 text-sm font-semibold text-white transition hover:bg-brand-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-900">
+                class="w-full rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-on-primary transition hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus">
             Daftar
         </button>
     </form>
 
     <p class="mt-6 text-center text-sm text-slate-500">
         Sudah punya akun?
-        <a href="{{ route('login') }}" class="font-semibold text-brand-900 underline underline-offset-4">Masuk</a>
+        <a href="{{ route('login') }}" class="font-semibold text-primary underline underline-offset-4">Masuk</a>
     </p>
 @endsection
