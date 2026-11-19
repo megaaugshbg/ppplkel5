@@ -1,0 +1,24 @@
+/*
+ * Token warna Markir.In: SATU-SATUNYA tempat nilai warna tema ditulis.
+ *
+ * - Halaman Tailwind (layouts/app, layouts/guest): token ini di-import oleh app.css
+ *   dan tersedia sebagai kelas: bg-page, bg-surface, text-primary, text-on-primary, dst.
+ * - Halaman CSS biasa (layouts/parkir, check-out, pembayaran): file ini dimuat langsung
+ *   lewat @vite('resources/css/tokens.css'), pakai var(--color-...). Tanpa preflight Tailwind.
+ *
+ * Ganti warna tema cukup di sini.
+ */
+:root {
+    --color-page: #fffbe8;          /* latar halaman (cream) */
+    --color-surface: #ffffff;       /* kartu, navbar, form */
+    --color-surface-alt: #f6efd2;   /* kartu cream lebih gelap, field input, hover */
+    --color-line: #ebe1b8;          /* border dan garis */
+
+    --color-primary: #111178;       /* tombol, link, ikon, menu aktif, judul */
+    --color-primary-hover: #0c0c5a; /* hover tombol */
+    --color-primary-soft: #e6e5f2;  /* latar tipis item aktif / terpilih */
+    --color-on-primary: #fffbe8;    /* teks & ikon di atas warna primary */
+
+    --color-focus: #111178;         /* outline / ring fokus input */
+    --color-shadow: rgb(17 17 120 / 0.12);
+}

@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+@import './tokens.css';
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
@@ -7,12 +8,21 @@
 
 @theme {
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif;
+}
 
-    /* Palet Markir.In (diambil dari desain Figma) */
-    --color-brand-900: #1b2a6b;   /* navy logo & teks judul */
-    --color-brand-500: #8a9bd6;   /* tombol utama */
-    --color-brand-600: #7587c9;   /* hover tombol */
-    --color-brand-200: #c3cdf2;   /* latar biru muda */
-    --color-brand-100: #e6ebfb;   /* kartu / field tipis */
-    --color-brand-50:  #f3f5fd;
+/*
+ * Daftarkan token dari tokens.css sebagai kelas Tailwind (bg-page, text-primary, dst).
+ * Nilainya TIDAK ditulis di sini; "inline reference" membuat kelas langsung memakai
+ * var(--color-...) dari tokens.css tanpa mendefinisikan ulang variabelnya.
+ */
+@theme inline reference {
+    --color-page: var(--color-page);
+    --color-surface: var(--color-surface);
+    --color-surface-alt: var(--color-surface-alt);
+    --color-line: var(--color-line);
+    --color-primary: var(--color-primary);
+    --color-primary-hover: var(--color-primary-hover);
+    --color-primary-soft: var(--color-primary-soft);
+    --color-on-primary: var(--color-on-primary);
+    --color-focus: var(--color-focus);
 }
