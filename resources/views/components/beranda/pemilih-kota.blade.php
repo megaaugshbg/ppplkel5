@@ -23,7 +23,9 @@
         @if ($daftarKota->isEmpty())
             <p class="px-4 py-3 text-sm text-slate-500">Belum ada kota.</p>
         @else
-            <ul class="max-h-72 overflow-y-auto py-1" aria-label="Daftar kota">
+            {{-- Daftar panjang: tinggi dibatasi (maks. setengah layar di HP), scroll tidak ikut menggulir halaman. --}}
+            <ul class="max-h-[min(18rem,50vh)] overflow-y-auto overscroll-contain py-1" aria-label="Daftar kota">
+
                 @foreach ($daftarKota as $k)
                     <li>
                         <a href="{{ route('home', ['kota' => $k]) }}" @if ($k === $kota) aria-current="true" @endif
