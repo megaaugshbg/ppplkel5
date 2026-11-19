@@ -1,87 +1,92 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Markir.In - Cari Lokasi Parkir</title>
-    <style>
-        * { box-sizing: border-box; }
-        body { font-family: sans-serif; margin: 0; background: #f4f6f8; color: #1f2937; }
-        header { background: #1e40af; color: #fff; padding: 20px 40px; font-size: 22px; font-weight: bold; }
-        main { max-width: 800px; margin: 40px auto; padding: 0 20px; }
-        h1 { color: #1e40af; margin-bottom: 4px; }
-        .sub { color: #6b7280; margin-top: 0; }
-        .search { display: flex; gap: 8px; margin: 24px 0 12px; flex-wrap: wrap; }
-        .search input, .search select { padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 16px; }
-        .search input { flex: 1; min-width: 200px; }
-        .btn { background: #1e40af; color: #fff; padding: 12px 24px; border: 0; border-radius: 8px; font-size: 16px; cursor: pointer; text-decoration: none; }
-        .btn.sec { background: #fff; color: #1e40af; border: 1px solid #1e40af; }
-        .btn.off { background: #9ca3af; }
-        .map { background: #dbeafe; border: 2px dashed #93c5fd; border-radius: 12px; height: 160px; display: flex; align-items: center; justify-content: center; color: #1e40af; margin: 16px 0; }
-        .card { background: #fff; padding: 20px; border-radius: 12px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; gap: 16px; }
-        .card h3 { margin: 0 0 4px; }
-        .card p { margin: 2px 0; color: #6b7280; }
-        .badge { color: #047857; font-weight: bold; }
-        .badge.tutup { color: #b91c1c; }
-        .info { padding: 12px 16px; border-radius: 8px; margin: 12px 0; display: none; }
-        .info.warn { background: #fef3c7; color: #92400e; }
-        .info.ok { background: #d1fae5; color: #065f46; }
-        #kosong { text-align: center; color: #6b7280; padding: 24px; display: none; }
-        footer { text-align: center; color: #6b7280; padding: 24px; font-size: 14px; }
-    </style>
-</head>
-<body>
-    <header>Markir.In</header>
-    <main>
-        <h1>Cari Lokasi Parkir</h1>
-        <p class="sub">Pilih tipe parkir, lalu temukan lahan parkir terdekat.</p>
+@extends('layouts.parkir')
 
-        <div class="search">
-            <input type="text" id="keyword" placeholder="Cari nama lokasi atau mall...">
-            <select id="tipe">
-                <option value="reguler">Parkir Reguler</option>
-                <option value="wanita">Woman Parking</option>
-            </select>
-            <button class="btn sec" id="btnGps" type="button">Gunakan lokasi saya</button>
-        </div>
+@section('judul', 'Cari Lokasi Parkir')
+@section('deskripsi', 'Temukan lahan parkir terdekat dari lokasimu, lalu pilih slot yang kamu mau.')
 
-        <div class="map">Peta sekitar lokasi Penyewa (placeholder)</div>
+@section('style')
+    .cari { display: flex; gap: 10px; margin-bottom: 18px; }
+    .cari input { flex: 1; min-width: 0; padding: 13px 18px; border: 1px solid var(--garis); background: #fff; border-radius: 999px; font-size: 15px; outline: none; }
+    .cari input:focus { border-color: var(--biru); }
+    .gps { background: #fff; border: 1px solid var(--biru); color: var(--biru); border-radius: 999px; padding: 0 20px; font-size: 14px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+    .gps:hover { background: var(--pucat); }
+    #daftar { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .lokasi { display: flex; flex-direction: column; gap: 12px; padding: 18px; }
+    .lokasi .atas { display: flex; gap: 12px; }
+    .ikon { flex: none; width: 48px; height: 48px; border-radius: 12px; background: var(--navy); color: #fff; font-weight: 900; font-size: 22px; display: flex; align-items: center; justify-content: center; }
+    .lokasi.tutup .ikon { background: #9ca3af; }
+    .lokasi h3 { margin: 0; font-size: 16px; color: var(--navy); }
+    .lokasi p { margin: 3px 0 0; font-size: 13px; color: #6b7280; }
+    .meta { display: flex; flex-wrap: wrap; gap: 6px; }
+    .chip { font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px; background: var(--pucat); border: 1px solid var(--garis); color: var(--navy); }
+    .chip.hijau { background: #d1fae5; border-color: #a7f3d0; color: #065f46; }
+    .chip.merah { background: #fee2e2; border-color: #fecaca; color: #b91c1c; }
+    .map { background: var(--pucat); border: 2px dashed #93abf0; border-radius: 12px; height: 260px; display: flex; align-items: center; justify-content: center; text-align: center; padding: 16px; color: var(--navy); font-size: 14px; }
+    .panel-samping ul { margin: 14px 0 0; padding-left: 18px; color: #4b5563; font-size: 13px; line-height: 1.7; }
+    #kosong { display: none; text-align: center; color: #6b7280; padding: 32px; font-size: 15px; }
+    @media (max-width: 640px) { #daftar { grid-template-columns: 1fr; } }
+@endsection
 
-        <div id="pesan" class="info"></div>
+@section('isi')
+    @if (session('pesan'))
+        <div class="info warn">{{ session('pesan') }}</div>
+    @endif
+    <div id="pesan" class="info" style="display:none;"></div>
 
-        <div id="daftar">
-            @foreach ($lokasi as $l)
-                <div class="card"
-                     data-teks="{{ strtolower($l['nama'].' '.$l['alamat']) }}"
-                     data-tipe="{{ implode(' ', $l['tipe']) }}"
-                     data-buka="{{ $l['buka'] ? 1 : 0 }}"
-                     data-nama="{{ $l['nama'] }}">
-                    <div>
-                        <h3>{{ $l['nama'] }}</h3>
-                        <p>{{ $l['alamat'] }}</p>
-                        <p>Rp {{ number_format($l['tarif'], 0, ',', '.') }} / jam
-                            <span class="jarak"> &middot; {{ $l['jarak'] }} km</span></p>
-                        @if ($l['buka'])
-                            <span class="badge">{{ $l['slot'] }} slot tersedia</span>
-                        @else
-                            <span class="badge tutup">Sedang tutup</span>
-                        @endif
+    <div class="grid">
+        <section>
+            <div class="cari">
+                <input type="search" id="keyword" value="{{ request('q') }}" placeholder="Cari nama lokasi atau mall...">
+                <button class="gps" id="btnGps" type="button">Gunakan lokasi saya</button>
+            </div>
+
+            <div id="daftar">
+                @foreach ($lokasi as $l)
+                    <div class="kartu lokasi {{ $l['buka'] ? '' : 'tutup' }}"
+                         data-id="{{ $l['id'] }}"
+                         data-teks="{{ strtolower($l['nama'].' '.$l['alamat']) }}"
+                         data-buka="{{ $l['buka'] ? 1 : 0 }}">
+                        <div class="atas">
+                            <div class="ikon">P</div>
+                            <div>
+                                <h3>{{ $l['nama'] }}</h3>
+                                <p>{{ $l['alamat'] }}</p>
+                            </div>
+                        </div>
+                        <div class="meta">
+                            <span class="chip jarak">{{ $l['jarak'] }} km</span>
+                            <span class="chip">Rp {{ number_format($l['tarif'], 0, ',', '.') }} / jam</span>
+                            @if ($l['buka'])
+                                <span class="chip hijau">{{ $l['slot_tipe']['reguler'] ?? 0 }} slot tersedia</span>
+                            @else
+                                <span class="chip merah">Sedang tutup</span>
+                            @endif
+                        </div>
+                        <a href="#" class="btn pilih {{ $l['buka'] ? '' : 'off' }}">Pilih Lokasi</a>
                     </div>
-                    <a href="#" class="btn pilih {{ $l['buka'] ? '' : 'off' }}">Pilih</a>
-                </div>
-            @endforeach
-        </div>
+                @endforeach
+            </div>
 
-        <div id="kosong">Lokasi tidak ditemukan. Silakan ubah kata kunci pencarian.</div>
-    </main>
-    <footer>Dikerjakan oleh: Nabil Athalafirja Dharmawan</footer>
+            <p id="kosong">Lokasi tidak ditemukan. Silakan ubah kata kunci pencarian.</p>
+        </section>
 
+        <aside class="panel-samping kartu">
+            <h2>Peta Sekitar Kamu</h2>
+            <div class="map">Peta sekitar lokasi Penyewa (placeholder)</div>
+            <ul>
+                <li>Pilih lokasi untuk melihat denah slot per lantai.</li>
+                <li>Lokasi yang tutup tidak bisa dipesan.</li>
+                <li>Aktifkan lokasi agar jarak dihitung dari posisimu.</li>
+            </ul>
+        </aside>
+    </div>
+@endsection
+
+@section('script')
     <script>
         var kw = document.getElementById('keyword');
-        var tipe = document.getElementById('tipe');
         var pesan = document.getElementById('pesan');
         var kosong = document.getElementById('kosong');
-        var cards = document.querySelectorAll('#daftar .card');
+        var cards = document.querySelectorAll('#daftar .lokasi');
 
         function tampilPesan(teks, jenis) {
             pesan.textContent = teks;
@@ -91,18 +96,16 @@
 
         function filter() {
             var k = kw.value.toLowerCase();
-            var t = tipe.value;
             var n = 0;
             cards.forEach(function (c) {
-                var cocok = c.dataset.teks.indexOf(k) !== -1 && c.dataset.tipe.split(' ').indexOf(t) !== -1;
+                var cocok = c.dataset.teks.indexOf(k) !== -1;
                 c.style.display = cocok ? 'flex' : 'none';
-                if (cocok) n++;
+                if (cocok) { n++; }
             });
             kosong.style.display = n ? 'none' : 'block';
         }
 
         kw.addEventListener('input', filter);
-        tipe.addEventListener('change', filter);
 
         cards.forEach(function (c) {
             c.querySelector('.pilih').addEventListener('click', function (e) {
@@ -110,7 +113,7 @@
                 if (c.dataset.buka === '0') {
                     tampilPesan('Lokasi parkir sedang tutup. Silakan pilih lahan parkir lain.', 'warn');
                 } else {
-                    tampilPesan('Lahan parkir dipilih: ' + c.dataset.nama + '. Lanjut ke Pilih Slot (belum dibuat).', 'ok');
+                    window.location.href = '/slot-parkir/' + c.dataset.id + '?tipe=reguler';
                 }
             });
         });
@@ -128,5 +131,4 @@
 
         filter();
     </script>
-</body>
-</html>
+@endsection

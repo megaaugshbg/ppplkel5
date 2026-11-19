@@ -24,3 +24,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/woman-parking/create', [WomanParkingController::class, 'create'])->name('woman-parking.create');
     Route::post('/woman-parking', [WomanParkingController::class, 'store'])->name('woman-parking.store');
 });
+
+// Cari Lokasi Parkir, Cari Slot Parkir, Pesan Slot Parkir
+Route::get('/cari-parkir', [\App\Http\Controllers\ParkirController::class, 'index']);
+Route::get('/slot-parkir/{lokasi}', [\App\Http\Controllers\SlotController::class, 'index'])->whereNumber('lokasi');
+Route::post('/pesan-slot', [\App\Http\Controllers\SlotController::class, 'pesan']);
+Route::get('/konfirmasi-pesanan', [\App\Http\Controllers\SlotController::class, 'konfirmasi']);

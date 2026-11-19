@@ -10,7 +10,7 @@
         <div class="absolute inset-0 -z-10 bg-gradient-to-b from-brand-900/30 to-brand-900/80"></div>
 
         <div class="mx-auto flex max-w-6xl flex-col items-center px-6 pb-20 pt-8 text-center md:pb-28 md:pt-16">
-            <form action="#" class="flex w-full max-w-xl items-center gap-2 rounded-full bg-white px-4 py-2 shadow-lg">
+            <form action="{{ url('/cari-parkir') }}" method="GET" class="flex w-full max-w-xl items-center gap-2 rounded-full bg-white px-4 py-2 shadow-lg">
                 <svg class="h-5 w-5 shrink-0 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
                 <input type="search" name="q" placeholder="Cari tempat parkir..." aria-label="Cari tempat parkir"
                        class="w-full bg-transparent py-1.5 text-sm outline-none placeholder:text-slate-400">
@@ -18,6 +18,12 @@
 
             <h1 class="mt-10 text-3xl font-bold text-white md:text-5xl">Parkir tanpa muter-muter.</h1>
             <p class="mt-3 max-w-md text-white/85">Pilih mal, pilih lantai, bayar. Slot kamu sudah menunggu.</p>
+
+            <a href="{{ url('/cari-parkir') }}"
+               class="mt-8 inline-flex items-center gap-2 rounded-full bg-white px-7 py-3 text-sm font-semibold text-brand-900 shadow-lg transition hover:bg-brand-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">
+                <svg class="h-5 w-5 text-red-600" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7Zm0 9.5A2.5 2.5 0 1 1 12 6.500a2.500 2.500 0 0 1 0 5Z"/></svg>
+                Cari Lokasi Parkir
+            </a>
         </div>
     </section>
 
