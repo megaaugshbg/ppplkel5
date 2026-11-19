@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\WomanParkingController;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/login');
@@ -17,4 +18,9 @@ Route::middleware('guest')->group(function () {
 Route::middleware('auth')->group(function () {
     Route::get('/home', [HomeController::class, 'index'])->name('home');
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+
+    // Woman Parking
+    Route::get('/woman-parking', [WomanParkingController::class, 'index'])->name('woman-parking.index');
+    Route::get('/woman-parking/create', [WomanParkingController::class, 'create'])->name('woman-parking.create');
+    Route::post('/woman-parking', [WomanParkingController::class, 'store'])->name('woman-parking.store');
 });
