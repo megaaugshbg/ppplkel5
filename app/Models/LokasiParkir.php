@@ -97,10 +97,39 @@ class LokasiParkir extends Model
         });
     }
 
-    /** true jika lahan parkir sedang buka sekarang (waktu Asia/Jakarta). */
+    /**
+     * true jika lahan parkir sedang buka sekarang (waktu Asia/Jakarta).
+     * Saklar pengembangan config('parkir.abaikan_jam_operasional') + APP_ENV=local:
+     * jam operasional diabaikan, hanya kolom `buka` (tutup manual) yang diperiksa.
+     */
     protected function sedangBuka(): Attribute
     {
-        return Attribute::get(fn () => $this->bukaPada(now(self::ZONA_WAKTU)));
+        return Attribute::get(fn () => self::abaikanJamOperasional()
+            ? (bool) $this->buka
+            : $this->bukaPada(now(self::ZONA_WAKTU)));
+    }
+
+    /**
+     * Keterangan bila sedang tutup: "Ditutup sementara" (kolom buka = false)
+     * atau "Buka pukul 10:00" (di luar jam operasional). null bila sedang buka.
+     */
+    protected function keteranganTutup(): Attribute
+    {
+        return Attribute::get(function () {
+            if ($this->sedang_buka) {
+                return null;
+            }
+
+            return ! $this->buka || ! $this->jam_buka
+                ? 'Ditutup sementara'
+                : 'Buka pukul ' . substr($this->jam_buka, 0, 5);
+        });
+    }
+
+    /** Saklar pengembangan aktif? (hanya di APP_ENV=local) */
+    public static function abaikanJamOperasional(): bool
+    {
+        return config('parkir.abaikan_jam_operasional') && app()->environment('local');
     }
 
     /** "Buka" atau "Tutup". */

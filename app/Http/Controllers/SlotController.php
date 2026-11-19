@@ -18,16 +18,11 @@ class SlotController extends Controller
         'Parkir Mall Galaxy' => ['R-06'],
     ];
 
-    private const PESAN_TUTUP = 'Lokasi parkir sedang tutup. Silakan pilih lahan parkir lain.';
 
     // Pilih Tipe Slot (3.3.6): Normal, Woman, Priority, EV beserta jumlah slot kosong
     public function pilihTipe(int $lokasi)
     {
         $lokasi = LokasiParkir::denganJumlahSlot()->findOrFail($lokasi);
-
-        if (! $lokasi->sedang_buka) {
-            return redirect()->route('home')->with('pesan', self::PESAN_TUTUP);
-        }
 
         $slotSesi = $this->slotTerisiDiSesi($lokasi->id);
 
@@ -45,7 +40,10 @@ class SlotController extends Controller
             ]);
         })->values();
 
-        return view('pilih-tipe', compact('lokasi', 'tipe'));
+        // Lokasi tutup tetap bisa dilihat; pemesanan ditolak (lihat pesan()).
+        $bannerTutup = $this->bannerTutup($lokasi);
+
+        return view('pilih-tipe', compact('lokasi', 'tipe', 'bannerTutup'));
     }
 
     // Cari Slot Parkir (3.3.7): denah lantai dan status slot
@@ -58,11 +56,6 @@ class SlotController extends Controller
             return redirect()->route('lokasi.tipe', $lokasi->id);
         }
 
-        // lokasi di luar jam operasional
-        if (! $lokasi->sedang_buka) {
-            return redirect()->route('home')->with('pesan', self::PESAN_TUTUP);
-        }
-
         $slots = $this->daftarSlot($lokasi->id, $tipe);
         $tersedia = count(array_filter($slots, fn ($s) => ! $s['terisi']));
 
@@ -71,6 +64,8 @@ class SlotController extends Controller
             'tipe' => $tipe,
             'labelTipe' => SlotParkir::LABEL[$tipe],
             'bisaPesan' => in_array($tipe, SlotParkir::TIPE, true),
+            'tutup' => ! $lokasi->sedang_buka,
+            'bannerTutup' => $this->bannerTutup($lokasi),
             'perLantai' => collect($slots)->groupBy('lantai'),
             'tersedia' => $tersedia,
         ]);
@@ -95,6 +90,11 @@ class SlotController extends Controller
 
         $lokasi = LokasiParkir::find($idLokasi);
         abort_if(! $lokasi, 404);
+
+        // lokasi di luar jam operasional / ditutup manual: tolak di server, bukan hanya di view
+        if (! $lokasi->sedang_buka) {
+            return redirect($balik)->with('error', 'Lokasi parkir sedang tutup.');
+        }
 
         if (! $kode) {
             return redirect($balik)->with('error', 'Pilih slot parkir terlebih dahulu.');
@@ -166,6 +166,19 @@ class SlotController extends Controller
             ->sortBy(fn ($s) => sprintf('%03d-%04d-%s', $s['lantai'], strlen($s['kode']), $s['kode'])) // R-2 sebelum R-10
             ->values()
             ->all();
+    }
+
+    /** Teks banner untuk lokasi yang sedang tutup, atau null bila buka. */
+    private function bannerTutup(LokasiParkir $lokasi): ?string
+    {
+        $ket = $lokasi->keterangan_tutup;
+        if ($ket === null) {
+            return null;
+        }
+
+        return 'Lokasi parkir sedang tutup. ' . (str_starts_with($ket, 'Buka pukul ')
+            ? 'Pemesanan dibuka pukul ' . substr($ket, strlen('Buka pukul ')) . '.'
+            : $ket . '.');
     }
 
     /** Kode slot di lokasi ini yang sudah dipesan di sesi sekarang. */

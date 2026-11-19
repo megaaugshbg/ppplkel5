@@ -1,6 +1,6 @@
 {{--
     Kartu mal di beranda. $mal berasal dari HomeController::daftarMal():
-    nama, area, foto (URL, sudah fallback ke default), buka, jam, jarak (km|null),
+    nama, area, foto (URL, sudah fallback ke default), buka, keteranganTutup, jam, jarak (km|null),
     kosong (jumlah slot kosong), tipeKosong (tipe yang masih ada slot kosong), url.
 --}}
 @props(['mal', 'labelTipe' => [], 'tipe' => null])
@@ -9,16 +9,11 @@
     $jarak = $mal['jarak'];
     $teksJarak = $jarak === null ? null
         : ($jarak < 1 ? number_format($jarak * 1000, 0, ',', '.') . ' m' : number_format($jarak, 1, ',', '.') . ' km');
-
-    // Mal yang sedang tutup tidak bisa diklik.
-    $tag = $mal['buka'] ? 'a' : 'div';
-    $kelas = 'group flex w-[16.5rem] shrink-0 flex-col overflow-hidden rounded-2xl border border-line bg-surface shadow-sm md:w-full '
-        . ($mal['buka']
-            ? 'transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus'
-            : 'cursor-not-allowed');
 @endphp
 
-<{{ $tag }} @if ($mal['buka']) href="{{ $mal['url'] }}" @else aria-disabled="true" @endif class="{{ $kelas }}">
+{{-- Mal yang tutup tetap bisa dibuka (lihat tipe & denah), tapi tidak bisa dipesan. --}}
+<a href="{{ $mal['url'] }}"
+   class="group flex w-[16.5rem] shrink-0 flex-col overflow-hidden rounded-2xl border border-line bg-surface shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus md:w-full">
 
     <div class="relative aspect-[16/10] bg-surface-alt">
         <img src="{{ $mal['foto'] }}" alt="" loading="lazy"
@@ -42,6 +37,12 @@
         <p class="text-xs text-slate-500">
             {{ $mal['area'] ?? '' }}@if ($mal['area'] && $mal['jam']) &middot; @endif{{ $mal['jam'] ?? '' }}
         </p>
+        @if ($mal['keteranganTutup'])
+            <p class="inline-flex items-center gap-1 text-xs font-semibold text-primary">
+                <svg class="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+                {{ $mal['keteranganTutup'] }}
+            </p>
+        @endif
 
         <p class="mt-1 text-sm">
             @if ($mal['kosong'] > 0)
@@ -62,4 +63,4 @@
             </ul>
         @endif
     </div>
-</{{ $tag }}>
+</a>

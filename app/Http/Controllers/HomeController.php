@@ -88,6 +88,7 @@ class HomeController extends Controller
                     'area'      => $l->area,
                     'foto'      => $l->foto_url,
                     'buka'      => $l->sedang_buka,
+                    'keteranganTutup' => $l->keterangan_tutup, // "Buka pukul 10:00" / "Ditutup sementara" / null
                     'jam'       => $l->jam_operasional,
                     'jarak'     => $posisi && $l->latitude !== null && $l->longitude !== null
                         ? self::haversineKm($posisi[0], $posisi[1], $l->latitude, $l->longitude)

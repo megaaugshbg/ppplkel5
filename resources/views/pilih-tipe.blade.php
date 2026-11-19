@@ -4,6 +4,13 @@
 
 @section('content')
     <div class="mx-auto max-w-5xl space-y-6 px-4 pt-5 md:px-6 md:pt-8">
+        @if ($bannerTutup)
+            <div role="status" class="flex items-start gap-3 rounded-2xl border border-line bg-primary-soft px-4 py-3 text-sm font-medium text-primary">
+                <svg class="mt-0.5 h-5 w-5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+                <p>{{ $bannerTutup }}</p>
+            </div>
+        @endif
+
         <a href="{{ route('home') }}" class="inline-flex items-center gap-1 text-sm font-semibold hover:opacity-80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus">
             <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
             Kembali ke beranda

@@ -31,10 +31,15 @@
     .simulasi { font-size: 12px; color: #6b7280; margin: 0 0 14px; }
     .btn:disabled { background: var(--color-surface-alt); color: var(--color-primary); opacity: .6; cursor: not-allowed; }
     .segera { text-align: center; font-size: 13px; font-weight: 600; color: var(--color-primary); margin: 8px 0 12px; }
+    .info.tutup { background: var(--color-primary-soft); color: var(--color-primary); border: 1px solid var(--color-line); font-weight: 600; }
     @media (max-width: 640px) { .panel.aktif { gap: 12px 24px; } }
 @endsection
 
 @section('isi')
+    @if ($bannerTutup)
+        <div class="info tutup" role="status">{{ $bannerTutup }}</div>
+    @endif
+
     @if (session('error'))
         <div class="info warn">{{ session('error') }}</div>
     @endif
@@ -93,14 +98,18 @@
                     <strong>Rp {{ number_format($lokasi['tarif'], 0, ',', '.') }} / jam</strong>
                 </div>
 
-                @if ($bisaPesan)
+                @if ($tutup)
+                    {{-- Lokasi tutup: denah tetap tampil, pemesanan ditolak (juga dicek di server). --}}
+                    <button type="submit" class="btn" disabled aria-describedby="ket-pesan">Pesan Slot</button>
+                    <p id="ket-pesan" class="segera">Lokasi sedang tutup</p>
+                @elseif ($bisaPesan)
                     <p class="simulasi"><label><input type="checkbox" name="gagal" value="1"> Simulasikan gagal menyimpan pesanan</label></p>
 
                     <button type="submit" class="btn">Pesan Slot</button>
                 @else
                     {{-- Priority & EV: denah boleh dilihat, pemesanan belum dibuka. --}}
-                    <button type="submit" class="btn" disabled aria-describedby="ket-segera">Pesan Slot</button>
-                    <p id="ket-segera" class="segera">Segera hadir</p>
+                    <button type="submit" class="btn" disabled aria-describedby="ket-pesan">Pesan Slot</button>
+                    <p id="ket-pesan" class="segera">Segera hadir</p>
                 @endif
                 <a href="{{ route('lokasi.tipe', $lokasi['id']) }}" class="btn sec">Batal</a>
             </aside>

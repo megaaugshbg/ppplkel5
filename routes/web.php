@@ -26,13 +26,13 @@ Route::middleware('auth')->group(function () {
     Route::get('/woman-parking/create', [WomanParkingController::class, 'create'])->name('woman-parking.create');
     Route::post('/woman-parking', [WomanParkingController::class, 'store'])->name('woman-parking.store');
 
-    // Pilih Tipe Slot, Cari Slot Parkir (denah), Pesan Slot Parkir
+    // Pilih Tipe Slot, Cari Slot Parkir (denah), Pesan Slot Parkir, Konfirmasi Pesanan
     Route::get('/lokasi/{lokasi}/tipe', [SlotController::class, 'pilihTipe'])->whereNumber('lokasi')->name('lokasi.tipe');
     Route::get('/slot-parkir/{lokasi}', [SlotController::class, 'index'])->whereNumber('lokasi')->name('slot-parkir');
     Route::post('/pesan-slot', [SlotController::class, 'pesan'])->name('pesan-slot');
+    Route::get('/konfirmasi-pesanan', [SlotController::class, 'konfirmasi'])->name('konfirmasi-pesanan');
 });
 
 // Halaman Cari Lokasi sudah digantikan beranda; tautan lama diarahkan ke /home.
 // (Route::redirect membuang query string, jadi ?q= diteruskan manual.)
 Route::get('/cari-parkir', fn (Request $request) => redirect()->route('home', $request->query()));
-Route::get('/konfirmasi-pesanan', [SlotController::class, 'konfirmasi']);
