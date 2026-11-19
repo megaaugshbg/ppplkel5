@@ -4,17 +4,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Markir.In - Check-out</title>
+    <x-favicon />
+    @vite('resources/css/tokens.css')
     <style>
-        body { font-family: sans-serif; margin: 0; background: #fff; color: #1f2937; }
-        header { background: #1e40af; color: #fff; padding: 16px 32px; font-size: 20px; font-weight: bold; }
+        /* Warna diambil dari resources/css/tokens.css */
+        body { font-family: sans-serif; margin: 0; background: var(--color-page); color: #1f2937; }
+        header { background: var(--color-surface); border-bottom: 1px solid var(--color-line); padding: 12px 32px; }
         main { max-width: 600px; margin: 32px auto; padding: 0 20px; }
-        h1 { color: #1e40af; }
-        .card { border: 1px solid #bfdbfe; background: #eff6ff; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
-        .card h3 { margin: 0 0 4px; color: #1e40af; }
+        h1 { color: var(--color-primary); }
+        .card { border: 1px solid var(--color-line); background: var(--color-surface); border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+        .card h3 { margin: 0 0 4px; color: var(--color-primary); }
         .card p { margin: 4px 0; }
-        .btn { background: #1e40af; color: #fff; padding: 10px 20px; border: 0; border-radius: 6px; font-size: 15px; cursor: pointer; }
-        .btn.sec { background: #fff; color: #1e40af; border: 1px solid #1e40af; }
-        input[type=text] { padding: 10px; border: 1px solid #1e40af; border-radius: 6px; font-size: 15px; width: 100%; margin: 8px 0; }
+        .btn { background: var(--color-primary); color: var(--color-on-primary); padding: 10px 20px; border: 0; border-radius: 6px; font-size: 15px; cursor: pointer; }
+        .btn:hover { background: var(--color-primary-hover); }
+        .btn:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+        .btn.sec { background: var(--color-surface); color: var(--color-primary); border: 1px solid var(--color-primary); }
+        .btn.sec:hover { background: var(--color-primary-soft); }
+        input[type=text] { padding: 10px; border: 1px solid var(--color-primary); background: var(--color-surface); border-radius: 6px; font-size: 15px; width: 100%; margin: 8px 0; box-sizing: border-box; }
+        input[type=text]:focus { outline: 2px solid var(--color-focus); outline-offset: 1px; }
         .info { padding: 12px 16px; border-radius: 6px; margin: 12px 0; display: none; }
         .info.warn { background: #fef3c7; color: #92400e; }
         .hint { color: #6b7280; font-size: 14px; }
@@ -24,7 +31,7 @@
     </style>
 </head>
 <body>
-    <header>Markir.In</header>
+    <header><x-logo :height="40" /></header>
     <main>
 
         <!-- Halaman 1: Booking Aktif -->
