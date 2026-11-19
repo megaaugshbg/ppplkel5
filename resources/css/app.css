@@ -2,11 +2,17 @@
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
-@source "../**/*.blade.php";
-@source "../**/*.js";
-@source "../**/*.vue";
+@source '../**/*.blade.php';
+@source '../**/*.js';
 
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif;
+
+    /* Palet Markir.In (diambil dari desain Figma) */
+    --color-brand-900: #1b2a6b;   /* navy logo & teks judul */
+    --color-brand-500: #8a9bd6;   /* tombol utama */
+    --color-brand-600: #7587c9;   /* hover tombol */
+    --color-brand-200: #c3cdf2;   /* latar biru muda */
+    --color-brand-100: #e6ebfb;   /* kartu / field tipis */
+    --color-brand-50:  #f3f5fd;
 }
