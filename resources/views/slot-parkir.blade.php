@@ -276,7 +276,9 @@
     // tipeAktif : di Blade diganti dengan $tipe dari controller
     // ==========================================================
     const urlKembali = '/lokasi/1/tipe';
-    let tipeAktif = 'woman';
+    // Tipe diambil dari ?tipe= di URL (kode controller -> kunci prototipe ini).
+    const PETA_TIPE = { reguler: 'regular', wanita: 'woman', prioritas: 'priority', ev: 'ev' };
+    let tipeAktif = PETA_TIPE[new URLSearchParams(window.location.search).get('tipe')] || 'regular';
 
     const lokasi = {
         id: 1,
