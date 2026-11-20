@@ -1,143 +1,117 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Markir.In - Pembayaran</title>
-    <x-favicon />
-    @vite('resources/css/tokens.css')
-    <style>
-        /* Warna diambil dari resources/css/tokens.css */
-        body { font-family: sans-serif; margin: 0; background: var(--color-page); color: #1f2937; }
-        header { background: var(--color-surface); border-bottom: 1px solid var(--color-line); padding: 12px 32px; }
-        main { max-width: 600px; margin: 32px auto; padding: 0 20px; }
-        h1 { color: var(--color-primary); }
-        .card { border: 1px solid var(--color-line); background: var(--color-surface); border-radius: 8px; padding: 16px; margin-bottom: 16px; }
-        .card h3 { margin: 0 0 8px; color: var(--color-primary); }
-        .card p { margin: 4px 0; }
-        .total { font-size: 18px; margin-top: 10px !important; }
-        .metode label { display: block; border: 1px solid var(--color-line); background: var(--color-surface); border-radius: 6px; padding: 10px; margin-bottom: 8px; cursor: pointer; }
-        .metode label:hover { background: var(--color-surface-alt); }
-        .metode input { accent-color: var(--color-primary); }
-        .btn { background: var(--color-primary); color: var(--color-on-primary); padding: 10px 20px; border: 0; border-radius: 6px; font-size: 15px; cursor: pointer; }
-        .btn:hover { background: var(--color-primary-hover); }
-        .btn:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
-        .btn.sec { background: var(--color-surface); color: var(--color-primary); border: 1px solid var(--color-primary); }
-        .btn.sec:hover { background: var(--color-primary-soft); }
-        .info { padding: 12px 16px; border-radius: 6px; margin: 12px 0; display: none; }
-        .info.warn { background: #fef3c7; color: #92400e; }
-        .info.sukses { background: #dcfce7; color: #166534; display: block; }
-        .step { display: none; }
-        .step.aktif { display: block; }
-        footer { text-align: center; color: #6b7280; padding: 24px; font-size: 14px; }
-    </style>
-</head>
-<body>
-    <header><x-logo :height="40" /></header>
-    <main>
+{{-- Form Pembayaran (use case Lakukan Pembayaran). --}}
+@extends('layouts.app')
 
-        <!-- Form Pembayaran -->
-        <div id="stepForm" class="step aktif">
-            <h1>Pembayaran</h1>
+@section('title', 'Pembayaran - Markir.In')
 
-            <div class="card">
-                <h3>Rincian Tagihan</h3>
-                <p>Kode booking: {{ $booking['kode'] }}</p>
-                <p>Lokasi: {{ $booking['lokasi'] }}</p>
-                <p>Slot: {{ $booking['slot'] }}</p>
-                <p>Waktu: {{ $booking['tanggal'] }}, {{ $booking['waktu'] }}</p>
-                <p>Durasi: {{ $booking['durasi'] }} jam x Rp {{ number_format($booking['tarif'], 0, ',', '.') }}</p>
-                <p class="total">Total biaya: <strong>Rp {{ number_format($total, 0, ',', '.') }}</strong></p>
-            </div>
+@section('content')
+<div class="mx-auto max-w-xl space-y-5 px-4 pt-5 md:px-6 md:pt-8">
 
-            <h3>Pilih Metode Pembayaran</h3>
-            <div class="metode">
-                @foreach ($metode as $m)
-                    <label><input type="radio" name="metode" value="{{ $m }}"> {{ $m }}</label>
+    <a href="{{ route('konfirmasi-pesanan') }}" class="inline-flex items-center gap-1 text-sm font-semibold hover:opacity-80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus">
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+        Kembali ke pesanan
+    </a>
+
+    <div>
+        <h1 class="text-xl font-bold md:text-2xl">Pembayaran</h1>
+        <p class="text-sm text-slate-500">Cek rincian tagihan, lalu bayar sebelum check in.</p>
+    </div>
+
+    @if (! empty($pesanan['contoh']))
+        <div role="status" class="rounded-2xl border border-line bg-surface-alt px-4 py-3 text-sm">
+            Belum ada pesanan dari halaman Pesan Slot, jadi yang tampil adalah <strong>data contoh</strong>.
+        </div>
+    @endif
+
+    @if (session('error') || $errors->any())
+        <div role="alert" class="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800">
+            {{ session('error') ?? $errors->first() }}
+        </div>
+    @endif
+
+    {{-- Rincian tagihan --}}
+    <section aria-labelledby="judul-tagihan" class="space-y-3">
+        <h2 id="judul-tagihan" class="text-base font-semibold">Rincian tagihan</h2>
+        <x-rincian-pesanan :pesanan="$pesanan" />
+    </section>
+
+    <form method="POST" action="{{ route('pembayaran.bayar') }}" class="space-y-5">
+        @csrf
+
+        {{-- Lama parkir --}}
+        <fieldset class="space-y-3">
+            <legend class="text-base font-semibold">Lama parkir</legend>
+            <div class="grid grid-cols-3 gap-2 sm:grid-cols-6">
+                @foreach ($durasi as $jam)
+                    <label class="cursor-pointer">
+                        <input type="radio" name="durasi" value="{{ $jam }}" class="peer sr-only"
+                               @checked((int) old('durasi', 2) === $jam)>
+                        <span class="block rounded-xl border border-line bg-surface py-2.5 text-center text-sm font-medium peer-checked:border-primary peer-checked:bg-primary-soft peer-checked:font-semibold peer-focus-visible:outline-2 peer-focus-visible:outline-focus hover:bg-surface-alt">
+                            {{ $jam }} jam
+                        </span>
+                    </label>
                 @endforeach
             </div>
+        </fieldset>
 
-            <label><input type="checkbox" id="gagal"> Simulasikan pembayaran gagal</label>
-            <div id="pesan" class="info warn"></div>
+        {{-- Metode pembayaran --}}
+        <fieldset class="space-y-3">
+            <legend class="text-base font-semibold">Metode pembayaran</legend>
+            <label class="flex cursor-pointer items-center gap-4 rounded-2xl border border-primary bg-surface p-4">
+                <input type="radio" name="metode" value="QRIS" checked class="h-4 w-4 accent-[var(--color-primary)]">
+                <span class="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-primary-soft text-primary">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h2v2h-2zM18 14h2v2h-2zM14 18h2v2h-2zM18 18h2v2h-2z"/></svg>
+                </span>
+                <span>
+                    <span class="block text-sm font-semibold">QRIS</span>
+                    <span class="block text-xs text-slate-500">Scan pakai e-wallet atau m-banking yang mendukung QRIS.</span>
+                </span>
+            </label>
+        </fieldset>
 
-            <p>
-                <button class="btn" id="btnBayar">Konfirmasi Pembayaran</button>
-                <button class="btn sec" id="btnBatal">Batalkan</button>
+        @if (! empty($pesanan['tarif_ev_kwh']))
+            <p class="rounded-xl bg-emerald-50 p-3 text-xs text-emerald-800">
+                Biaya charging (Rp {{ number_format($pesanan['tarif_ev_kwh'], 0, ',', '.') }}/kWh) dihitung sesuai pemakaian dan ditagihkan terpisah.
             </p>
+        @endif
+
+        {{-- Total --}}
+        <div class="flex items-center justify-between rounded-2xl bg-surface-alt px-4 py-3">
+            <span class="text-sm text-slate-600">Total biaya (<span id="teks-durasi">{{ old('durasi', 2) }}</span> jam)</span>
+            <strong id="teks-total" class="text-lg">Rp {{ number_format($pesanan['tarif'] * old('durasi', 2), 0, ',', '.') }}</strong>
         </div>
 
-        <!-- Halaman Status Pembayaran -->
-        <div id="stepStatus" class="step">
-            <h1>Status Pembayaran</h1>
-            <div class="info sukses">Pembayaran berhasil.</div>
-            <div class="card">
-                <p>Kode booking: {{ $booking['kode'] }}</p>
-                <p>Metode: <strong id="sMetode"></strong></p>
-                <p>Total dibayar: <strong>Rp {{ number_format($total, 0, ',', '.') }}</strong></p>
-                <p>Status booking: <strong>Sudah dibayar</strong></p>
-            </div>
-            <button class="btn" id="btnSelesai">Selesai</button>
-        </div>
+        <label class="flex items-center gap-2 text-xs text-slate-500">
+            <input type="checkbox" name="gagal" value="1" class="accent-[var(--color-primary)]">
+            Simulasikan pembayaran gagal
+        </label>
 
-        <!-- Halaman Detail Booking (jika pembayaran dibatalkan) -->
-        <div id="stepDetail" class="step">
-            <h1>Detail Booking</h1>
-            <div class="card">
-                <h3>{{ $booking['lokasi'] }}</h3>
-                <p>Slot: {{ $booking['slot'] }}</p>
-                <p>Kode booking: {{ $booking['kode'] }}</p>
-                <p>Status: {{ $booking['status'] }}</p>
-            </div>
-            <button class="btn" id="btnKembali">Bayar Sekarang</button>
-        </div>
+        <button type="submit" id="tombol-bayar"
+                class="w-full rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-on-primary hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus">
+            Konfirmasi Pembayaran
+        </button>
+    </form>
 
-    </main>
-    <footer>Dikerjakan oleh: Fachry Ananda Akmal</footer>
+    <form method="POST" action="{{ route('pembayaran.batal') }}">
+        @csrf
+        <button type="submit"
+                class="w-full rounded-xl border border-line px-4 py-3 text-sm font-medium text-primary hover:bg-surface-alt focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus">
+            Batalkan Pembayaran
+        </button>
+    </form>
+</div>
+@endsection
 
-    <script>
-        var steps = ['stepForm', 'stepStatus', 'stepDetail'];
-        function tampil(id) {
-            steps.forEach(function (s) {
-                document.getElementById(s).classList.toggle('aktif', s === id);
-            });
-        }
+@push('scripts')
+<script>
+    // Hitung ulang total saat lama parkir diganti
+    const tarif = {{ (int) $pesanan['tarif'] }};
+    const rupiah = n => 'Rp ' + n.toLocaleString('id-ID');
 
-        var pesan = document.getElementById('pesan');
-
-        function error(teks) {
-            pesan.textContent = teks;
-            pesan.style.display = 'block';
-        }
-
-        document.getElementById('btnBayar').addEventListener('click', function () {
-            pesan.style.display = 'none';
-
-            var pilih = document.querySelector('input[name=metode]:checked');
-            if (!pilih) {
-                error('Pilih metode pembayaran terlebih dahulu.');
-                return;
-            }
-            if (document.getElementById('gagal').checked) {
-                error('Pembayaran gagal diproses. Silakan coba lagi.');
-                return;
-            }
-
-            document.getElementById('sMetode').textContent = pilih.value;
-            tampil('stepStatus');
+    document.querySelectorAll('input[name="durasi"]').forEach(r => {
+        r.addEventListener('change', () => {
+            document.getElementById('teks-durasi').textContent = r.value;
+            document.getElementById('teks-total').textContent = rupiah(tarif * r.value);
         });
-
-        document.getElementById('btnBatal').addEventListener('click', function () {
-            pesan.style.display = 'none';
-            tampil('stepDetail');
-        });
-
-        document.getElementById('btnKembali').addEventListener('click', function () {
-            tampil('stepForm');
-        });
-
-        document.getElementById('btnSelesai').addEventListener('click', function () {
-            window.location.href = '/';
-        });
-    </script>
-</body>
-</html>
+    });
+</script>
+@endpush
