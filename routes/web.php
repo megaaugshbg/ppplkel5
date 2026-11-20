@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\BatalPesananController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\SlotController;
 use App\Http\Controllers\WomanParkingController;
@@ -9,6 +10,7 @@ use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\DetailBookingController;
 use App\Http\Controllers\PembayaranController;
 use App\Http\Controllers\ProfilController;
+use App\Http\Controllers\RiwayatController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -52,6 +54,11 @@ Route::middleware('auth')->group(function () {
 
     // Detail Booking (tujuan saat pembayaran / check in dibatalkan)
     Route::get('/booking/detail', DetailBookingController::class)->name('booking.detail');
+    Route::post('/booking/batal', BatalPesananController::class)->name('booking.batal'); // hanya pesanan belum dibayar
+
+    // Riwayat Booking (selesai / dibatalkan)
+    Route::get('/riwayat', [RiwayatController::class, 'index'])->name('riwayat');
+    Route::get('/riwayat/{kode}', [RiwayatController::class, 'detail'])->where('kode', 'MKR-[0-9]{6}')->name('riwayat.detail');
 
     // Lakukan Check-out (3.6.1): Booking Aktif -> Scan Barcode -> Berhasil -> Struk
     Route::get('/check-out', [CheckoutController::class, 'index'])->name('check-out');

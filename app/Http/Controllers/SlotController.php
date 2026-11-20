@@ -2,21 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Booking;
 use App\Models\LokasiParkir;
 use App\Models\SlotParkir;
 use App\Models\User;
+use App\Support\PesananSesi;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Throwable;
 
 class SlotController extends Controller
 {
-    /**
-     * Simulasi alternate flow "Slot telah dipesan pengguna lain" (slot diserobot
-     * tepat saat ditekan Pesan). Kunci: nama lokasi => kode slot.
-     * HAPUS saat pemesanan sudah memakai tabel booking di database.
-     */
-    private const REBUTAN = [
-        'Parkir Mall Galaxy' => ['R-06'],
-    ];
+    private const PESAN_DIAMBIL = 'Slot telah dipesan pengguna lain. Silakan pilih slot lain.';
+    private const PESAN_GAGAL = 'Terjadi kesalahan saat menyimpan pesanan. Silakan coba lagi.';
 
     // Pilih Tipe Slot (3.3.6)
     public function pilihTipe(Request $request, int $lokasi)
@@ -24,17 +22,10 @@ class SlotController extends Controller
         $lokasi = LokasiParkir::denganJumlahSlot()->findOrFail($lokasi);
         $user = $request->user();
 
-        $slotSesi = $this->slotTerisiDiSesi($lokasi->id);
-
-        $tipe = collect($lokasi->ringkasan_slot)->map(function ($r, $kode) use ($lokasi, $slotSesi, $user) {
-            // Kurangi slot yang baru dipesan di sesi ini (pemesanan belum tersimpan ke database).
-            $tersedia = $r['tersedia'] - ($slotSesi
-                ? SlotParkir::where('lokasi_parkir_id', $lokasi->id)->tipe($kode)->tersedia()->whereIn('kode', $slotSesi)->count()
-                : 0);
-
+        // Jumlah slot kosong dibaca dari status slot di database (terpesan & terisi = tidak tersedia).
+        $tipe = collect($lokasi->ringkasan_slot)->map(function ($r, $kode) use ($lokasi, $user) {
             return array_merge($r, [
                 'kode'      => $kode,
-                'tersedia'  => max(0, $tersedia),
                 'bisaPesan' => in_array($kode, SlotParkir::TIPE, true),
                 // Petunjuk singkat bila syarat profil belum terpenuhi (kartu tetap bisa dibuka).
                 'syarat'    => $this->syaratProfil($user, $kode)['tombol'] ?? null,
@@ -132,13 +123,9 @@ class SlotController extends Controller
             return redirect($balik)->with('error', 'Slot parkir tidak ditemukan.');
         }
 
-        $key = $idLokasi . '-' . $kode;
-
-        // verifikasi ketersediaan slot
-        if ($slot['terisi'] || in_array($kode, self::REBUTAN[$lokasi->nama] ?? [], true)) {
-            session()->push('slot_terisi', $key);
-
-            return redirect($balik)->with('error', 'Slot telah dipesan pengguna lain. Silakan pilih slot lain.');
+        // verifikasi ketersediaan slot (cek awal; dicek ulang dengan kunci baris di transaksi)
+        if ($slot['terisi']) {
+            return redirect($balik)->with('error', self::PESAN_DIAMBIL);
         }
 
         // Slot EV wajib punya data charger agar info di konfirmasi akurat.
@@ -148,23 +135,74 @@ class SlotController extends Controller
 
         // simulasi gagal menyimpan pesanan
         if ($request->boolean('gagal')) {
-            return redirect($balik)->with('error', 'Terjadi kesalahan saat menyimpan pesanan. Silakan coba lagi.');
+            return redirect($balik)->with('error', self::PESAN_GAGAL);
         }
 
-        // simpan pemesanan (sementara di session, belum ke database)
-        session()->push('slot_terisi', $key);
-        session()->put('pesanan_terakhir', [
-            'kode'         => 'MKR-' . str_pad((string) random_int(1, 999), 3, '0', STR_PAD_LEFT),
-            'lokasi'       => $lokasi->nama,
-            'alamat'       => $lokasi->alamat,
-            'tipe'         => SlotParkir::LABEL[$tipe],
-            'slot'         => $kode,
-            'konektor'     => $tipe === SlotParkir::TIPE_EV ? $slot['konektor'] : null,
-            'daya'         => $tipe === SlotParkir::TIPE_EV ? $slot['daya'] : null,
-            'tarif'        => $lokasi->tarif,
-            'tarif_ev_kwh' => $tipe === SlotParkir::TIPE_EV ? $lokasi->tarif_ev_kwh : null,
-            'status'       => 'Terpesan',
-        ]);
+        // Simpan pemesanan ke tabel booking. Baris user & slot dikunci (lockForUpdate) supaya
+        // satu pengguna hanya punya satu pesanan aktif dan satu slot tidak bisa dipesan dua orang.
+        $user = $request->user();
+        try {
+            $hasil = DB::transaction(function () use ($user, $lokasi, $tipe, $kode) {
+                User::whereKey($user->id)->lockForUpdate()->first();
+
+                $aktif = Booking::milik($user->id)->aktif()->orderByDesc('id')->first();
+                if ($aktif) {
+                    return ['aktif' => $aktif];
+                }
+
+                $baris = SlotParkir::where('lokasi_parkir_id', $lokasi->id)
+                    ->tipe($tipe)
+                    ->where('kode', $kode)
+                    ->lockForUpdate()
+                    ->first();
+
+                if (! $baris || $baris->status !== SlotParkir::STATUS_TERSEDIA) {
+                    return ['diambil' => true];
+                }
+
+                $ev = $tipe === SlotParkir::TIPE_EV;
+                $booking = Booking::create([
+                    'kode'             => Booking::buatKodeUnik(),
+                    'user_id'          => $user->id,
+                    'lokasi_parkir_id' => $lokasi->id,
+                    'slot_parkir_id'   => $baris->id,
+                    'nama_lokasi'      => $lokasi->nama,
+                    'alamat_lokasi'    => $lokasi->alamat,
+                    'label_tipe'       => SlotParkir::LABEL[$tipe],
+                    'kode_slot'        => $baris->kode,
+                    'konektor'         => $ev ? $baris->konektor : null,
+                    'daya_kw'          => $ev ? $baris->daya_kw : null,
+                    'tarif'            => $lokasi->tarif,
+                    'tarif_ev_kwh'     => $ev ? $lokasi->tarif_ev_kwh : null,
+                    'status'           => Booking::TERPESAN,
+                ]);
+
+                $baris->update(['status' => SlotParkir::STATUS_TERPESAN]);
+
+                return ['booking' => $booking];
+            });
+        } catch (Throwable $e) {
+            report($e);
+
+            return redirect($balik)->with('error', self::PESAN_GAGAL);
+        }
+
+        // Satu pengguna hanya boleh punya satu pesanan aktif: arahkan ke pesanan itu.
+        if (isset($hasil['aktif'])) {
+            $aktif = $hasil['aktif'];
+            $tujuan = match ($aktif->status) {
+                Booking::TERPESAN      => 'pembayaran',
+                Booking::SUDAH_DIBAYAR => 'check-in',
+                default                => 'check-out',
+            };
+
+            return redirect()->route($tujuan)->with('error', 'Kamu masih punya pesanan aktif (' . $aktif->kode
+                . '). Selesaikan atau batalkan dulu sebelum memesan lagi.');
+        }
+
+        if (isset($hasil['diambil'])) {
+            return redirect($balik)->with('error', self::PESAN_DIAMBIL);
+        }
 
         // Pesanan berhasil disimpan: langsung lanjut ke halaman Pembayaran.
         return redirect()->route('pembayaran');
@@ -172,7 +210,7 @@ class SlotController extends Controller
 
     public function konfirmasi()
     {
-        $pesanan = session('pesanan_terakhir');
+        $pesanan = PesananSesi::ambil();
         if (! $pesanan) {
             return redirect()->route('home');
         }
@@ -241,12 +279,10 @@ class SlotController extends Controller
 
     /**
      * Slot satu lokasi & tipe dari tabel slot_parkir, urut lantai lalu kode.
-     * terisi = status bukan 'tersedia', ATAU sudah dipesan di sesi ini.
+     * terisi = status di database bukan 'tersedia' (terpesan atau terisi).
      */
     private function daftarSlot(int $idLokasi, string $tipe): array
     {
-        $slotSesi = $this->slotTerisiDiSesi($idLokasi);
-
         return SlotParkir::where('lokasi_parkir_id', $idLokasi)
             ->tipe($tipe)
             ->get()
@@ -255,7 +291,7 @@ class SlotController extends Controller
                 'lantai'   => $s->lantai ?? 1,
                 'konektor' => $s->konektor,
                 'daya'     => $s->daya_kw,
-                'terisi'   => $s->status !== SlotParkir::STATUS_TERSEDIA || in_array($s->kode, $slotSesi, true),
+                'terisi'   => $s->status !== SlotParkir::STATUS_TERSEDIA, // terpesan / terisi
             ])
             ->sortBy(fn ($s) => sprintf('%03d-%04d-%s', $s['lantai'], strlen($s['kode']), $s['kode'])) // R-2 sebelum R-10
             ->values()
@@ -273,17 +309,5 @@ class SlotController extends Controller
         return 'Lokasi parkir sedang tutup. ' . (str_starts_with($ket, 'Buka pukul ')
             ? 'Pemesanan dibuka pukul ' . substr($ket, strlen('Buka pukul ')) . '.'
             : $ket . '.');
-    }
-
-    /** Kode slot di lokasi ini yang sudah dipesan di sesi sekarang. */
-    private function slotTerisiDiSesi(int $idLokasi): array
-    {
-        $awalan = $idLokasi . '-';
-
-        return collect(session('slot_terisi', []))
-            ->filter(fn ($k) => str_starts_with($k, $awalan))
-            ->map(fn ($k) => substr($k, strlen($awalan)))
-            ->values()
-            ->all();
     }
 }

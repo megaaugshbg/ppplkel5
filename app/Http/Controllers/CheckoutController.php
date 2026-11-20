@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\LokasiParkir;
+use App\Models\Booking;
 use App\Models\SlotParkir;
 use App\Support\PesananSesi;
 use Carbon\Carbon;
@@ -14,11 +14,8 @@ use Throwable;
 // Use case Lakukan Check-out (3.6.1)
 class CheckoutController extends Controller
 {
-    /** Data struk check-out terakhir (pesanan aktif dikosongkan setelah check-out). */
-    public const KUNCI_STRUK = 'struk_terakhir';
-
-    /** Format barcode = kode booking dari Pesan Slot, contoh MKR-001. */
-    private const FORMAT_BARCODE = '/^MKR-\d{3}$/';
+    /** Format barcode = kode booking dari Pesan Slot ("MKR-" + 6 digit, contoh MKR-000123). */
+    private const FORMAT_BARCODE = Booking::FORMAT_KODE;
 
     private const PESAN_GAGAL = 'Gagal memproses check-out, silakan coba lagi.';
     private const PESAN_BELUM_CHECKIN = 'Anda belum melakukan check-in, sehingga check-out tidak dapat dilakukan.';
@@ -26,9 +23,9 @@ class CheckoutController extends Controller
     // Halaman Booking Aktif
     public function index()
     {
-        // Tanpa pesanan aktif: jangan buat data contoh (PesananSesi::ambil), tampilkan keadaan kosong.
+        // Tanpa pesanan aktif: tampilkan keadaan kosong (+ tautan struk terakhir dari database).
         if (! PesananSesi::ada()) {
-            return view('check-out', ['pesanan' => null, 'struk' => session(self::KUNCI_STRUK)]);
+            return view('check-out', ['pesanan' => null, 'struk' => PesananSesi::strukTerakhir()]);
         }
 
         $pesanan = PesananSesi::ambil();
@@ -73,53 +70,33 @@ class CheckoutController extends Controller
             return $gagal('Barcode tidak valid. Silakan lakukan pemindaian ulang.');
         }
 
-        // Hanya booking milik pengguna ini (pesanan di session-nya sendiri) yang bisa di-check-out.
-        $pesanan = PesananSesi::ada() ? PesananSesi::ambil() : null;
-        if (! $pesanan || $pesanan['kode'] !== $kode) {
-            if (($struk = session(self::KUNCI_STRUK)) && $struk['kode'] === $kode) {
-                return $gagal('Booking ini sudah check-out.');
-            }
-
-            // Alternate flow: booking tidak ditemukan
+        // Hanya booking milik pengguna yang login yang bisa di-check-out (cek user_id).
+        $booking = Booking::where('kode', $kode)->where('user_id', $request->user()->id)->first();
+        if (! $booking || ! in_array($booking->status, [...Booking::AKTIF, Booking::SELESAI], true)) {
+            // Alternate flow: booking tidak ditemukan (termasuk milik orang lain / dibatalkan)
             return $gagal('Booking tidak ditemukan. Silakan periksa kembali barcode yang digunakan.');
+        }
+        if ($booking->status === Booking::SELESAI) {
+            return $gagal('Booking ini sudah check-out.');
         }
 
         // Alternate flow: penyewa belum check-in
-        if (! PesananSesi::sudahCheckIn($pesanan)) {
+        if ($booking->status !== Booking::SUDAH_CHECKIN) {
             return $gagal(self::PESAN_BELUM_CHECKIN);
         }
 
-        $keluar = now('Asia/Jakarta');
-
         try {
-            $idLokasi = DB::transaction(fn () => $this->kembalikanSlot($pesanan));
+            $hasil = DB::transaction(fn () => $this->selesaikan($booking->id));
         } catch (Throwable $e) {
             report($e);
 
             return $gagal(self::PESAN_GAGAL, true);
         }
 
-        // Slot ini tidak lagi dianggap terisi di denah sesi ini.
-        if ($idLokasi) {
-            session(['slot_terisi' => array_values(array_diff(
-                session('slot_terisi', []),
-                [$idLokasi . '-' . $pesanan['slot']]
-            ))]);
+        // Status berubah di antara pengecekan dan transaksi (mis. dua tab sekaligus)
+        if ($hasil === Booking::SELESAI) {
+            return $gagal('Booking ini sudah check-out.');
         }
-
-        // Biaya sudah dibayar di muka (Pembayaran, sebelum check in): check-out tidak memungut.
-        // Durasi aktual hanya informasi; tidak ada pelunasan atau pengembalian.
-        $durasiAktual = $this->durasiAktual($pesanan['waktu_checkin'] ?? null, $keluar);
-        $durasiDibayar = (int) ($pesanan['durasi'] ?? 0);
-
-        session([self::KUNCI_STRUK => array_merge($pesanan, [
-            'waktu_keluar'  => $keluar->format('d-m-Y H:i'),
-            'durasi_aktual' => $durasiAktual,
-            'melebihi_jam'  => max(0, $durasiAktual - $durasiDibayar),
-            'total_biaya'   => (int) ($pesanan['total'] ?? 0), // = jumlah yang sudah dibayar
-            'status'        => PesananSesi::SELESAI,
-        ])]);
-        PesananSesi::kosongkan();
 
         return redirect()->route('check-out.berhasil');
     }
@@ -138,7 +115,7 @@ class CheckoutController extends Controller
 
     private function tampilStruk(string $view)
     {
-        $struk = session(self::KUNCI_STRUK);
+        $struk = PesananSesi::strukTerakhir();
         if (! $struk) {
             return redirect()->route('check-out');
         }
@@ -174,31 +151,39 @@ class CheckoutController extends Controller
     }
 
     /**
-     * Kembalikan slot parkir pesanan ini menjadi tersedia.
-     * Mengikuti pola CheckInController::perbaruiStatusSlot: data contoh dilewati dan
-     * tidak ada data yang diubah bila lokasi tidak ditemukan.
+     * Selesaikan booking dalam SATU transaksi: kunci baris booking, cek ulang status,
+     * catat waktu keluar, durasi, dan total biaya, ubah status menjadi selesai, lalu
+     * kembalikan slot (lewat slot_parkir_id) menjadi tersedia.
      *
-     * @return int|null id lokasi bila slot diperbarui
+     * Biaya sudah dibayar di muka (Pembayaran, sebelum check in): check-out tidak memungut.
+     * Durasi aktual hanya informasi; tidak ada pelunasan atau pengembalian.
+     *
+     * @return string|null Booking::SELESAI bila sudah selesai sebelumnya, null bila berhasil
      */
-    private function kembalikanSlot(array $pesanan): ?int
+    private function selesaikan(int $idBooking): ?string
     {
-        // data contoh tidak mengubah database bersama
-        if (! empty($pesanan['contoh'])) {
-            return null;
+        $booking = Booking::whereKey($idBooking)->lockForUpdate()->firstOrFail();
+        if ($booking->status === Booking::SELESAI) {
+            return Booking::SELESAI;
+        }
+        if ($booking->status !== Booking::SUDAH_CHECKIN) {
+            throw new \RuntimeException('Booking belum check in.');
         }
 
-        $lokasi = LokasiParkir::where('nama', $pesanan['lokasi'])
-            ->where('alamat', $pesanan['alamat'])
-            ->first();
+        $keluar = now(PesananSesi::ZONA_WAKTU)->format(PesananSesi::FORMAT_WAKTU); // WIB
+        $masuk = PesananSesi::keWib($booking->getRawOriginal('waktu_checkin'));
+        $durasiAktual = $this->durasiAktual($masuk, Carbon::createFromFormat(PesananSesi::FORMAT_WAKTU, $keluar, PesananSesi::ZONA_WAKTU));
 
-        if (! $lokasi) {
-            return null;
-        }
+        $booking->update([
+            'waktu_keluar'  => PesananSesi::keUtc($keluar), // disimpan UTC
+            'durasi_aktual' => $durasiAktual,
+            'melebihi_jam'  => max(0, $durasiAktual - (int) $booking->durasi),
+            'total_biaya'   => (int) $booking->total, // = jumlah yang sudah dibayar
+            'status'        => Booking::SELESAI,
+        ]);
 
-        SlotParkir::where('lokasi_parkir_id', $lokasi->id)
-            ->where('kode', $pesanan['slot'])
-            ->update(['status' => SlotParkir::STATUS_TERSEDIA]);
+        SlotParkir::whereKey($booking->slot_parkir_id)->update(['status' => SlotParkir::STATUS_TERSEDIA]);
 
-        return $lokasi->id;
+        return null;
     }
 }

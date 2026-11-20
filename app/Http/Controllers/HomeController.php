@@ -63,8 +63,10 @@ class HomeController extends Controller
             'q'          => $q,
             'adaPosisi'  => (bool) $posisi,
             'labelTipe'  => self::LABEL_PENDEK,
-            // Tabel booking belum ada. Nanti isi dengan booking terakhir milik auth()->user().
-            'riwayat'    => collect(),
+            // 3 riwayat (selesai/dibatalkan) terbaru milik pengguna; kosong bila tabel booking belum dibuat.
+            'riwayat'    => Schema::hasTable('booking') && $request->user()
+                ? RiwayatController::terbaru($request->user()->id)
+                : collect(),
         ]);
     }
 

@@ -1,7 +1,6 @@
 {{--
-    Riwayat booking terakhir.
-    Tabel booking BELUM ADA, jadi HomeController selalu mengirim koleksi kosong.
-    Nanti kirim item dengan kunci: lokasi, tipe, waktu, status (dan opsional url).
+    Riwayat booking terakhir di beranda (RiwayatController::terbaru).
+    Item: lokasi, tipe, waktu, status (label), status_kode (opsional, untuk ikon badge), url (opsional, ke detail).
 --}}
 @props(['items' => collect(), 'urlSemua' => '#'])
 
@@ -24,12 +23,23 @@
     @else
         <ul class="mt-4 divide-y divide-line">
             @foreach ($items as $item)
-                <li class="flex items-center justify-between gap-3 py-3">
-                    <div class="min-w-0">
-                        <p class="truncate text-sm font-semibold">{{ $item['lokasi'] }}</p>
-                        <p class="text-xs text-slate-500">{{ $item['tipe'] }} &middot; {{ $item['waktu'] }}</p>
-                    </div>
-                    <span class="shrink-0 rounded-full bg-primary-soft px-2.5 py-0.5 text-xs font-semibold text-primary">{{ $item['status'] }}</span>
+                <li>
+                    @php $isi = 'flex items-center justify-between gap-3 py-3'; @endphp
+                    @if (! empty($item['url']))
+                        <a href="{{ $item['url'] }}" class="{{ $isi }} -mx-2 rounded-xl px-2 hover:bg-surface-alt focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus">
+                    @else
+                        <div class="{{ $isi }}">
+                    @endif
+                        <div class="min-w-0">
+                            <p class="truncate text-sm font-semibold">{{ $item['lokasi'] }}</p>
+                            <p class="text-xs text-slate-500">{{ $item['tipe'] }} &middot; {{ $item['waktu'] }}</p>
+                        </div>
+                        <x-badge-status :status="$item['status_kode'] ?? null" :label="$item['status']" />
+                    @if (! empty($item['url']))
+                        </a>
+                    @else
+                        </div>
+                    @endif
                 </li>
             @endforeach
         </ul>

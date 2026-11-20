@@ -2,11 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\LokasiParkir;
-use App\Models\SlotParkir;
 use App\Support\PesananSesi;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Throwable;
 
 // Use case Lakukan Check In (3.4.2)
@@ -53,19 +50,18 @@ class CheckInController extends Controller
             return back()->with('error', 'Check in gagal diproses. Silakan coba lagi.');
         }
 
+        $pesanan['waktu_checkin'] = now('Asia/Jakarta')->format('d-m-Y H:i');
+        $pesanan['status'] = PesananSesi::SUDAH_CHECKIN;
+
+        // simpan() memperbarui booking dan status slot (terisi, lewat slot_parkir_id)
+        // dalam satu transaksi database.
         try {
-            DB::transaction(function () use ($pesanan) {
-                $this->perbaruiStatusSlot($pesanan);
-            });
+            PesananSesi::simpan($pesanan);
         } catch (Throwable $e) {
             report($e);
 
             return back()->with('error', 'Check in gagal diproses. Silakan coba lagi.');
         }
-
-        $pesanan['waktu_checkin'] = now('Asia/Jakarta')->format('d-m-Y H:i');
-        $pesanan['status'] = PesananSesi::SUDAH_CHECKIN;
-        PesananSesi::simpan($pesanan);
 
         return redirect()->route('check-in.konfirmasi');
     }
@@ -90,21 +86,5 @@ class CheckInController extends Controller
         }
 
         return view('check-in-konfirmasi', compact('pesanan'));
-    }
-
-    // Perbarui Status Slot: slot parkir pesanan ini menjadi terisi
-    private function perbaruiStatusSlot(array $pesanan): void
-    {
-        $lokasi = LokasiParkir::where('nama', $pesanan['lokasi'])
-            ->where('alamat', $pesanan['alamat'])
-            ->first();
-
-        if (! $lokasi) {
-            return;
-        }
-
-        SlotParkir::where('lokasi_parkir_id', $lokasi->id)
-            ->where('kode', $pesanan['slot'])
-            ->update(['status' => SlotParkir::STATUS_TERISI]);
     }
 }

@@ -7,7 +7,7 @@
 @php
     $menu = [
         ['label' => 'Home',       'url' => route('home'), 'aktif' => request()->routeIs('home')],
-        ['label' => 'Riwayat',    'url' => '#',           'aktif' => false], // halaman riwayat belum ada
+        ['label' => 'Riwayat',    'url' => route('riwayat'), 'aktif' => request()->routeIs('riwayat', 'riwayat.*')],
         ['label' => 'Pengaturan', 'url' => route('profil'), 'aktif' => request()->routeIs('profil')],
     ];
 @endphp
