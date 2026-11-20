@@ -1,145 +1,72 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Markir.In - Check-out</title>
-    <x-favicon />
-    @vite('resources/css/tokens.css')
-    <style>
-        /* Warna diambil dari resources/css/tokens.css */
-        body { font-family: sans-serif; margin: 0; background: var(--color-page); color: #1f2937; }
-        header { background: var(--color-surface); border-bottom: 1px solid var(--color-line); padding: 12px 32px; }
-        main { max-width: 600px; margin: 32px auto; padding: 0 20px; }
-        h1 { color: var(--color-primary); }
-        .card { border: 1px solid var(--color-line); background: var(--color-surface); border-radius: 8px; padding: 16px; margin-bottom: 16px; }
-        .card h3 { margin: 0 0 4px; color: var(--color-primary); }
-        .card p { margin: 4px 0; }
-        .btn { background: var(--color-primary); color: var(--color-on-primary); padding: 10px 20px; border: 0; border-radius: 6px; font-size: 15px; cursor: pointer; }
-        .btn:hover { background: var(--color-primary-hover); }
-        .btn:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
-        .btn.sec { background: var(--color-surface); color: var(--color-primary); border: 1px solid var(--color-primary); }
-        .btn.sec:hover { background: var(--color-primary-soft); }
-        input[type=text] { padding: 10px; border: 1px solid var(--color-primary); background: var(--color-surface); border-radius: 6px; font-size: 15px; width: 100%; margin: 8px 0; box-sizing: border-box; }
-        input[type=text]:focus { outline: 2px solid var(--color-focus); outline-offset: 1px; }
-        .info { padding: 12px 16px; border-radius: 6px; margin: 12px 0; display: none; }
-        .info.warn { background: #fef3c7; color: #92400e; }
-        .hint { color: #6b7280; font-size: 14px; }
-        .step { display: none; }
-        .step.aktif { display: block; }
-        footer { text-align: center; color: #6b7280; padding: 24px; font-size: 14px; }
-    </style>
-</head>
-<body>
-    <header><x-logo :height="40" /></header>
-    <main>
+{{-- Halaman Booking Aktif (use case Lakukan Check-out, langkah 1). --}}
+@extends('layouts.app')
 
-        <!-- Halaman 1: Booking Aktif -->
-        <div id="stepAktif" class="step aktif">
-            <h1>Booking Aktif</h1>
-            <div class="card">
-                <h3>{{ $booking['lokasi'] }}</h3>
-                <p>Slot: {{ $booking['slot'] }}</p>
-                <p>Kode booking: {{ $booking['kode'] }}</p>
-                <p>Status: Parkir berlangsung</p>
+@section('title', 'Booking Aktif - Markir.In')
+
+@section('content')
+<div class="mx-auto max-w-xl space-y-5 px-4 pt-5 md:px-6 md:pt-8">
+
+    <div>
+        <h1 class="text-xl font-bold md:text-2xl">Booking Aktif</h1>
+        <p class="text-sm text-slate-500">Booking yang sedang berjalan.</p>
+    </div>
+
+    @if (session('error'))
+        <div role="alert" class="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800">{{ session('error') }}</div>
+    @endif
+
+    @if (! $pesanan)
+        {{-- Tidak ada booking aktif --}}
+        <div class="rounded-3xl border-2 border-dashed border-line bg-surface px-6 py-10 text-center">
+            <p class="text-base font-semibold">Tidak ada booking aktif</p>
+            <p class="mt-1 text-sm text-slate-500">Pesan slot parkir dari beranda untuk memulai.</p>
+            <div class="mt-5 flex flex-col justify-center gap-2 sm:flex-row">
+                <a href="{{ route('home') }}"
+                   class="rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus">
+                    Cari parkir
+                </a>
+                @if ($struk)
+                    <a href="{{ route('check-out.struk') }}"
+                       class="rounded-xl border border-line px-5 py-2.5 text-sm font-medium text-primary hover:bg-surface-alt focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus">
+                        Lihat struk terakhir ({{ $struk['kode'] }})
+                    </a>
+                @endif
             </div>
-            <button class="btn" id="btnParkir">Parkir Berlangsung</button>
         </div>
-
-        <!-- Halaman 2: Check-out (scan barcode) -->
-        <div id="stepScan" class="step">
-            <h1>Check-out</h1>
-            <p>Pindai barcode booking Anda.</p>
-            <input type="text" id="barcode" placeholder="Masukkan kode barcode, contoh: MKR-001">
-            <p class="hint">Contoh uji: MKR-001 (berhasil), MKR-002 (belum check-in), MKR-999 (tidak ditemukan), abc (tidak valid).</p>
-            <label><input type="checkbox" id="offline"> Simulasikan koneksi terputus</label>
-            <div id="pesan" class="info warn"></div>
-            <p>
-                <button class="btn" id="btnScan">Scan Barcode</button>
-                <button class="btn sec" id="btnUlang" style="display:none;">Coba lagi</button>
-            </p>
-        </div>
-
-        <!-- Halaman 3: Check-out Berhasil -->
-        <div id="stepBerhasil" class="step">
-            <h1>Check-out Berhasil</h1>
-            <div class="card">
-                <h3 id="hLokasi"></h3>
-                <p>Waktu keluar: <strong id="hKeluar"></strong></p>
-                <p>Durasi parkir: <strong id="hDurasi"></strong></p>
-                <p>Total biaya: <strong id="hTotal"></strong></p>
+    @else
+        @if (! empty($pesanan['contoh']))
+            <div role="status" class="rounded-2xl border border-line bg-surface-alt px-4 py-3 text-sm">
+                Ini <strong>data contoh</strong>, jadi status slot di database tidak ikut diubah.
             </div>
-            <button class="btn sec" id="btnStruk">Lihat Struk</button>
-            <button class="btn" id="btnSelesai">Selesai</button>
-        </div>
+        @endif
 
-    </main>
-    <footer>Dikerjakan oleh: Raditya Prazenko Reswara</footer>
+        {{-- Kartu booking yang sedang parkir --}}
+        <section class="flex items-center gap-4 rounded-2xl border border-line bg-surface p-4">
+            <span class="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-primary text-lg font-bold text-on-primary">{{ $pesanan['slot'] }}</span>
+            <div class="min-w-0 flex-1">
+                <p class="text-xs text-slate-500">{{ $pesanan['kode'] }}</p>
+                <p class="truncate text-base font-semibold">{{ $pesanan['lokasi'] }}</p>
+                <p class="text-xs text-slate-500">{{ $pesanan['tipe'] }} &middot; masuk {{ $pesanan['waktu_checkin'] ?? '-' }} WIB</p>
+            </div>
+            <span class="shrink-0 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">Sedang parkir</span>
+        </section>
 
-    <script>
-        var data = @json($dataBooking);
+        <x-rincian-pesanan :pesanan="$pesanan">
+            <div class="flex justify-between gap-4 p-3">
+                <dt class="text-slate-500">Waktu masuk</dt>
+                <dd class="text-right">{{ $pesanan['waktu_checkin'] ?? '-' }} WIB</dd>
+            </div>
+            <div class="flex justify-between gap-4 p-3">
+                <dt class="text-slate-500">Dibayar</dt>
+                <dd class="text-right">Rp {{ number_format($pesanan['total'] ?? 0, 0, ',', '.') }} ({{ $pesanan['durasi'] ?? '-' }} jam)</dd>
+            </div>
+        </x-rincian-pesanan>
 
-        var steps = ['stepAktif', 'stepScan', 'stepBerhasil'];
-        function tampil(id) {
-            steps.forEach(function (s) {
-                document.getElementById(s).classList.toggle('aktif', s === id);
-            });
-        }
-
-        var pesan = document.getElementById('pesan');
-        var btnUlang = document.getElementById('btnUlang');
-
-        function error(teks, bisaUlang) {
-            pesan.textContent = teks;
-            pesan.style.display = 'block';
-            btnUlang.style.display = bisaUlang ? 'inline-block' : 'none';
-        }
-
-        function proses() {
-            pesan.style.display = 'none';
-            btnUlang.style.display = 'none';
-
-            var kode = document.getElementById('barcode').value.trim().toUpperCase();
-
-            if (document.getElementById('offline').checked) {
-                error('Gagal memproses check-out, silakan coba lagi.', true);
-                return;
-            }
-            if (!/^MKR-[0-9]{3}$/.test(kode)) {
-                error('Barcode tidak valid. Silakan lakukan pemindaian ulang.', false);
-                return;
-            }
-            if (!data[kode]) {
-                error('Booking tidak ditemukan. Silakan periksa kembali barcode yang digunakan.', false);
-                return;
-            }
-            if (!data[kode].sudah_checkin) {
-                error('Anda belum melakukan check-in, sehingga check-out tidak dapat dilakukan.', false);
-                return;
-            }
-
-            var b = data[kode];
-            document.getElementById('hLokasi').textContent = b.lokasi;
-            document.getElementById('hKeluar').textContent = b.keluar;
-            document.getElementById('hDurasi').textContent = b.durasi + ' jam';
-            document.getElementById('hTotal').textContent = 'Rp ' + (b.tarif * b.durasi).toLocaleString('id-ID');
-            tampil('stepBerhasil');
-        }
-
-        document.getElementById('btnParkir').addEventListener('click', function () { tampil('stepScan'); });
-        document.getElementById('btnScan').addEventListener('click', proses);
-        btnUlang.addEventListener('click', function () {
-            document.getElementById('offline').checked = false;
-            proses();
-        });
-        document.getElementById('btnStruk').addEventListener('click', function () {
-            alert('Struk check-out (contoh). Fitur struk belum dibuat.');
-        });
-        document.getElementById('btnSelesai').addEventListener('click', function () {
-            document.getElementById('barcode').value = '';
-            pesan.style.display = 'none';
-            tampil('stepAktif');
-        });
-    </script>
-</body>
-</html>
+        <a href="{{ route('check-out.scan') }}"
+           class="block w-full rounded-xl bg-primary px-4 py-3 text-center text-sm font-semibold text-on-primary hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus">
+            Parkir Berlangsung
+        </a>
+        <p class="text-center text-xs text-slate-500">Pilih saat kamu akan keluar dari lokasi parkir untuk melakukan check-out.</p>
+    @endif
+</div>
+@endsection

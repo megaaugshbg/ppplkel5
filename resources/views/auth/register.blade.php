@@ -33,6 +33,22 @@
             @error('alamat') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
         </div>
 
+        <fieldset>
+            <legend class="mb-1 block text-sm font-medium">Jenis kelamin</legend>
+            <div class="grid grid-cols-2 gap-3">
+                @foreach (\App\Models\User::JENIS_KELAMIN as $nilai => $label)
+                    <label class="cursor-pointer">
+                        <input type="radio" name="jenis_kelamin" value="{{ $nilai }}" class="peer sr-only" @checked(old('jenis_kelamin') === $nilai)
+                               @error('jenis_kelamin') aria-invalid="true" aria-describedby="err-jk" @enderror>
+                        <span class="flex items-center justify-center rounded-lg border px-4 py-3 text-sm font-medium transition peer-checked:border-primary peer-checked:bg-primary-soft peer-checked:text-primary peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-focus {{ $errors->has('jenis_kelamin') ? 'border-red-400' : 'border-slate-200' }}">
+                            {{ $label }}
+                        </span>
+                    </label>
+                @endforeach
+            </div>
+            @error('jenis_kelamin') <p id="err-jk" class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+        </fieldset>
+
         <div>
             <label for="nik" class="mb-1 block text-sm font-medium">NIK</label>
             <input id="nik" name="nik" value="{{ old('nik') }}" inputmode="numeric" maxlength="16" placeholder="16 digit" class="{{ $field }}">

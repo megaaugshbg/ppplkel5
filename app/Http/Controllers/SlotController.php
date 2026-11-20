@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\LokasiParkir;
 use App\Models\SlotParkir;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class SlotController extends Controller
@@ -18,13 +19,14 @@ class SlotController extends Controller
     ];
 
     // Pilih Tipe Slot (3.3.6)
-    public function pilihTipe(int $lokasi)
+    public function pilihTipe(Request $request, int $lokasi)
     {
         $lokasi = LokasiParkir::denganJumlahSlot()->findOrFail($lokasi);
+        $user = $request->user();
 
         $slotSesi = $this->slotTerisiDiSesi($lokasi->id);
 
-        $tipe = collect($lokasi->ringkasan_slot)->map(function ($r, $kode) use ($lokasi, $slotSesi) {
+        $tipe = collect($lokasi->ringkasan_slot)->map(function ($r, $kode) use ($lokasi, $slotSesi, $user) {
             // Kurangi slot yang baru dipesan di sesi ini (pemesanan belum tersimpan ke database).
             $tersedia = $r['tersedia'] - ($slotSesi
                 ? SlotParkir::where('lokasi_parkir_id', $lokasi->id)->tipe($kode)->tersedia()->whereIn('kode', $slotSesi)->count()
@@ -34,6 +36,8 @@ class SlotController extends Controller
                 'kode'      => $kode,
                 'tersedia'  => max(0, $tersedia),
                 'bisaPesan' => in_array($kode, SlotParkir::TIPE, true),
+                // Petunjuk singkat bila syarat profil belum terpenuhi (kartu tetap bisa dibuka).
+                'syarat'    => $this->syaratProfil($user, $kode)['tombol'] ?? null,
                 'url'       => route('slot-parkir', ['lokasi' => $lokasi->id, 'tipe' => $kode]),
             ]);
         })->values();
@@ -76,6 +80,7 @@ class SlotController extends Controller
             'labelTipe'      => SlotParkir::LABEL[$tipe],
             'bisaPesan'      => in_array($tipe, SlotParkir::TIPE, true),
             'tutup'          => ! $lokasi->sedang_buka,
+            'syarat'         => $this->syaratProfil($request->user(), $tipe),
             'bannerTutup'    => $this->bannerTutup($lokasi),
             'perLantai'      => collect($slots)->groupBy('lantai'),
             'tersedia'       => count(array_filter($slots, fn ($s) => ! $s['terisi'])),
@@ -109,6 +114,13 @@ class SlotController extends Controller
         // lokasi di luar jam operasional / ditutup manual: tolak di server, bukan hanya di view
         if (! $lokasi->sedang_buka) {
             return redirect($balik)->with('error', 'Lokasi parkir sedang tutup.');
+        }
+
+        // Syarat profil per tipe (Woman: perempuan, Priority: kartu disabilitas).
+        // Dicek di server, bukan hanya lewat tombol nonaktif di view.
+        $syarat = $this->syaratProfil($request->user(), $tipe);
+        if ($syarat && ! $syarat['terpenuhi']) {
+            return redirect($balik)->with('error', $syarat['error']);
         }
 
         if (! $kode) {
@@ -166,6 +178,65 @@ class SlotController extends Controller
         }
 
         return view('konfirmasi-pesanan', compact('pesanan'));
+    }
+
+    /**
+     * Syarat profil untuk memesan tipe tertentu. null = tanpa syarat (Normal, EV).
+     * Hasil: terpenuhi, banner (teks di denah), aksi ('profil' | 'kartu' | null),
+     * tombol (keterangan di bawah tombol Pesan bila belum terpenuhi), error (pesan server).
+     */
+    private function syaratProfil(?User $user, string $tipe): ?array
+    {
+        return match ($tipe) {
+            SlotParkir::TIPE_WANITA    => $this->syaratWanita($user),
+            SlotParkir::TIPE_PRIORITAS => $this->syaratPrioritas($user),
+            default                    => null,
+        };
+    }
+
+    /** Woman Parking: khusus pengguna perempuan (jenis_kelamin di profil). */
+    private function syaratWanita(?User $user): array
+    {
+        if ($user?->perempuan()) {
+            return ['terpenuhi' => true, 'banner' => '✓ Terverifikasi sebagai pengguna Woman Parking', 'aksi' => null, 'tombol' => null, 'error' => null];
+        }
+
+        if ($user?->jenis_kelamin === User::JK_LAKI) {
+            return [
+                'terpenuhi' => false,
+                'banner'    => 'Woman Parking khusus pengguna wanita',
+                'aksi'      => null,
+                'tombol'    => 'Khusus pengguna wanita',
+                'error'     => 'Woman Parking khusus pengguna wanita.',
+            ];
+        }
+
+        return [
+            'terpenuhi' => false,
+            'banner'    => 'Lengkapi jenis kelamin di profil untuk memesan Woman Parking',
+            'aksi'      => 'profil',
+            'tombol'    => 'Lengkapi jenis kelamin di profil',
+            'error'     => 'Lengkapi jenis kelamin di profil untuk memesan Woman Parking.',
+        ];
+    }
+
+    /**
+     * Priority Parking: kartu disabilitas berstatus terverifikasi.
+     * (Verifikasi kartu masih SIMULASI, lihat ProfilController::simpanKartu.)
+     */
+    private function syaratPrioritas(?User $user): array
+    {
+        if ($user?->kartuDisabilitasTerverifikasi()) {
+            return ['terpenuhi' => true, 'banner' => '✓ Kartu disabilitas terverifikasi', 'aksi' => null, 'tombol' => null, 'error' => null];
+        }
+
+        return [
+            'terpenuhi' => false,
+            'banner'    => 'Tambahkan kartu disabilitas untuk memesan Priority Parking',
+            'aksi'      => 'kartu',
+            'tombol'    => 'Perlu kartu disabilitas terverifikasi',
+            'error'     => 'Tambahkan kartu disabilitas yang terverifikasi untuk memesan Priority Parking.',
+        ];
     }
 
     /**

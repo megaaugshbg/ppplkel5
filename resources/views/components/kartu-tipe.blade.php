@@ -1,6 +1,7 @@
 {{--
     Kartu satu tipe slot di halaman Pilih Tipe Slot.
-    $tipe: kode, label, total, tersedia, bisaPesan, url (dari SlotController::pilihTipe).
+    $tipe: kode, label, total, tersedia, bisaPesan, syarat (petunjuk bila syarat profil
+    belum terpenuhi, atau null), url (dari SlotController::pilihTipe).
     Nonaktif bila mal tidak punya tipe ini ("Tidak tersedia") atau semua slot terpakai ("Penuh").
 --}}
 @props(['tipe'])
@@ -55,5 +56,12 @@
         @unless ($tipe['bisaPesan'])
             <p class="rounded-lg bg-primary-soft px-2.5 py-1 text-[11px] font-semibold text-primary">Pemesanan segera hadir &middot; lihat denah</p>
         @endunless
+        @if (! empty($tipe['syarat']))
+            {{-- Syarat profil belum terpenuhi: kartu tetap bisa dibuka untuk melihat denah. --}}
+            <p class="inline-flex items-center gap-1.5 rounded-lg bg-surface-alt px-2.5 py-1 text-[11px] font-semibold text-primary">
+                <svg class="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg>
+                {{ $tipe['syarat'] }}
+            </p>
+        @endif
     </a>
 @endif

@@ -13,8 +13,9 @@ class SlotParkir extends Model
     public const TIPE_PRIORITAS = 'prioritas';
     public const TIPE_EV        = 'ev';
 
-    // Tipe yang sudah bisa dipesan. Prioritas menunggu verifikasi kartu disabilitas.
-    public const TIPE = [self::TIPE_REGULER, self::TIPE_WANITA, self::TIPE_EV];
+    // Tipe yang bisa dipesan. Woman & Priority punya syarat profil
+    // (dicek di SlotController::syaratWanita / syaratPrioritas).
+    public const TIPE = [self::TIPE_REGULER, self::TIPE_WANITA, self::TIPE_PRIORITAS, self::TIPE_EV];
 
     public const SEMUA_TIPE = [self::TIPE_REGULER, self::TIPE_WANITA, self::TIPE_PRIORITAS, self::TIPE_EV];
 
