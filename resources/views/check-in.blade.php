@@ -16,12 +16,6 @@
         <p class="text-sm text-slate-500">Konfirmasi check in saat kamu sudah sampai di lokasi parkir.</p>
     </div>
 
-    @if (! empty($pesanan['contoh']))
-        <div role="status" class="rounded-2xl border border-line bg-surface-alt px-4 py-3 text-sm">
-            Ini <strong>data contoh</strong>, jadi status slot di database tidak ikut diubah.
-        </div>
-    @endif
-
     @if (session('error'))
         <div role="alert" class="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800">
             {{ session('error') }}

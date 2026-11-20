@@ -16,6 +16,9 @@ class CheckInController extends Controller
     public function index()
     {
         $pesanan = PesananSesi::ambil();
+        if (! $pesanan) {
+            return PesananSesi::arahkanKeBeranda();
+        }
 
         // check in hanya bisa dilakukan setelah pesanan dibayar
         if (! PesananSesi::sudahBayar($pesanan)) {
@@ -34,6 +37,9 @@ class CheckInController extends Controller
     public function proses(Request $request)
     {
         $pesanan = PesananSesi::ambil();
+        if (! $pesanan) {
+            return PesananSesi::arahkanKeBeranda();
+        }
 
         if (! PesananSesi::sudahBayar($pesanan)) {
             return redirect()->route('pembayaran');
@@ -75,6 +81,9 @@ class CheckInController extends Controller
     public function konfirmasi()
     {
         $pesanan = PesananSesi::ambil();
+        if (! $pesanan) {
+            return PesananSesi::arahkanKeBeranda();
+        }
 
         if (! PesananSesi::sudahCheckIn($pesanan)) {
             return redirect()->route('check-in');
@@ -86,11 +95,6 @@ class CheckInController extends Controller
     // Perbarui Status Slot: slot parkir pesanan ini menjadi terisi
     private function perbaruiStatusSlot(array $pesanan): void
     {
-        // data contoh tidak mengubah database bersama
-        if (! empty($pesanan['contoh'])) {
-            return;
-        }
-
         $lokasi = LokasiParkir::where('nama', $pesanan['lokasi'])
             ->where('alamat', $pesanan['alamat'])
             ->first();

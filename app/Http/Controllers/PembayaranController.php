@@ -15,6 +15,9 @@ class PembayaranController extends Controller
     public function index()
     {
         $pesanan = PesananSesi::ambil();
+        if (! $pesanan) {
+            return PesananSesi::arahkanKeBeranda();
+        }
 
         if (PesananSesi::sudahBayar($pesanan)) {
             return redirect()->route('pembayaran.status');
@@ -30,6 +33,9 @@ class PembayaranController extends Controller
     public function bayar(Request $request)
     {
         $pesanan = PesananSesi::ambil();
+        if (! $pesanan) {
+            return PesananSesi::arahkanKeBeranda();
+        }
 
         if (PesananSesi::sudahBayar($pesanan)) {
             return redirect()->route('pembayaran.status');
@@ -73,6 +79,9 @@ class PembayaranController extends Controller
     public function status()
     {
         $pesanan = PesananSesi::ambil();
+        if (! $pesanan) {
+            return PesananSesi::arahkanKeBeranda();
+        }
 
         if (! PesananSesi::sudahBayar($pesanan)) {
             return redirect()->route('pembayaran');

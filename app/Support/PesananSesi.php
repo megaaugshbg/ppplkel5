@@ -2,6 +2,8 @@
 
 namespace App\Support;
 
+use Illuminate\Http\RedirectResponse;
+
 /**
  * Pesanan (booking) terakhir milik Penyewa.
  * Tabel booking belum ada, jadi pesanan disimpan di session 'pesanan_terakhir'
@@ -15,24 +17,36 @@ class PesananSesi
     public const TERPESAN = 'Terpesan';
     public const SUDAH_BAYAR = 'Sudah dibayar';
     public const SUDAH_CHECKIN = 'Sudah check in';
+    public const SELESAI = 'Selesai'; // setelah check-out (disimpan di struk, bukan di pesanan aktif)
 
-    public static function ambil(): array
+    /** Pesanan aktif di session, atau null kalau belum ada pesanan. */
+    public static function ambil(): ?array
     {
-        $pesanan = session(self::KUNCI);
+        return session(self::KUNCI);
+    }
 
-        // Belum ada pesanan dari halaman Pesan Slot: pakai data contoh
-        // supaya halaman Pembayaran & Check In tetap bisa dicoba.
-        if (! $pesanan) {
-            $pesanan = self::contoh();
-            self::simpan($pesanan);
-        }
-
-        return $pesanan;
+    /** Dipakai saat halaman dibuka tanpa pesanan aktif. */
+    public static function arahkanKeBeranda(): RedirectResponse
+    {
+        return redirect()->route('home')
+            ->with('pesan', 'Belum ada pesanan aktif. Silakan pesan slot parkir terlebih dahulu.');
     }
 
     public static function simpan(array $pesanan): void
     {
         session([self::KUNCI => $pesanan]);
+    }
+
+    /** Ada pesanan aktif di session? */
+    public static function ada(): bool
+    {
+        return (bool) session(self::KUNCI);
+    }
+
+    /** Hapus pesanan aktif (setelah check-out) supaya Penyewa bisa memesan lagi. */
+    public static function kosongkan(): void
+    {
+        session()->forget(self::KUNCI);
     }
 
     public static function sudahBayar(array $pesanan): bool
@@ -43,22 +57,5 @@ class PesananSesi
     public static function sudahCheckIn(array $pesanan): bool
     {
         return $pesanan['status'] === self::SUDAH_CHECKIN;
-    }
-
-    private static function contoh(): array
-    {
-        return [
-            'kode'         => 'MKR-001',
-            'lokasi'       => 'Parkir Tunjungan Plaza',
-            'alamat'       => 'Jl. Basuki Rahmat No. 8-12, Tegalsari, Surabaya',
-            'tipe'         => 'Normal Parking',
-            'slot'         => 'R-05',
-            'konektor'     => null,
-            'daya'         => null,
-            'tarif'        => 5000,
-            'tarif_ev_kwh' => null,
-            'status'       => self::TERPESAN,
-            'contoh'       => true,
-        ];
     }
 }
