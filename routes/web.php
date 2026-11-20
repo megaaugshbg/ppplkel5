@@ -4,6 +4,10 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\SlotController;
 use App\Http\Controllers\WomanParkingController;
+use App\Http\Controllers\CheckInController;
+use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\DetailBookingController;
+use App\Http\Controllers\PembayaranController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -31,6 +35,25 @@ Route::middleware('auth')->group(function () {
     Route::get('/slot-parkir/{lokasi}', [SlotController::class, 'index'])->whereNumber('lokasi')->name('slot-parkir');
     Route::post('/pesan-slot', [SlotController::class, 'pesan'])->name('pesan-slot');
     Route::get('/konfirmasi-pesanan', [SlotController::class, 'konfirmasi'])->name('konfirmasi-pesanan');
+
+
+    // Lakukan Pembayaran
+    Route::get('/pembayaran', [PembayaranController::class, 'index'])->name('pembayaran');
+    Route::post('/pembayaran', [PembayaranController::class, 'bayar'])->name('pembayaran.bayar');
+    Route::post('/pembayaran/batal', [PembayaranController::class, 'batal'])->name('pembayaran.batal');
+    Route::get('/pembayaran/status', [PembayaranController::class, 'status'])->name('pembayaran.status');
+
+    // Lakukan Check In
+    Route::get('/check-in', [CheckInController::class, 'index'])->name('check-in');
+    Route::post('/check-in', [CheckInController::class, 'proses'])->name('check-in.proses');
+    Route::post('/check-in/batal', [CheckInController::class, 'batal'])->name('check-in.batal');
+    Route::get('/check-in/konfirmasi', [CheckInController::class, 'konfirmasi'])->name('check-in.konfirmasi');
+
+    // Detail Booking (tujuan saat pembayaran / check in dibatalkan)
+    Route::get('/booking/detail', DetailBookingController::class)->name('booking.detail');
+
+    // Lakukan Check-Out
+    Route::get('/check-out', [CheckoutController::class, 'index'])->name('check-out');
 });
 
 // Halaman Cari Lokasi sudah digantikan beranda; tautan lama diarahkan ke /home.
