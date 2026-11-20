@@ -154,7 +154,8 @@ class SlotController extends Controller
             'status'       => 'Terpesan',
         ]);
 
-        return redirect('/konfirmasi-pesanan');
+        // Pesanan berhasil disimpan: langsung lanjut ke halaman Pembayaran.
+        return redirect()->route('pembayaran');
     }
 
     public function konfirmasi()

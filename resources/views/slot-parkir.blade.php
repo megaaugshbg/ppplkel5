@@ -37,15 +37,10 @@
     .header h1 { margin: 14px 0 6px; font-size: 34px; font-weight: 700; color: var(--primary); }
     .header p { margin: 0; font-size: 17px; color: #4a4a8a; }
 
-    /* Dropdown preview (hanya untuk demo standalone) */
-    .preview-tipe {
-        display: flex; align-items: center; gap: 10px;
-        margin-top: 14px; font-size: 14px; color: var(--primary); font-weight: 600;
-    }
-    .preview-tipe select {
-        padding: 6px 10px; border-radius: 8px; border: 1px solid var(--line);
-        font-family: inherit; font-size: 14px; background: #fff; color: var(--primary);
-    }
+    /* Pesan dari server */
+    .header .pesan { margin: 14px 0 0; padding: 12px 16px; border-radius: 10px; font-size: 15px; font-weight: 600; }
+    .pesan-error { background: #fef3c7; color: #92400e; }
+    .pesan-info { background: var(--primary-soft); color: var(--primary); }
 
     /* ---------- Layout ---------- */
     .wrap {
@@ -217,20 +212,22 @@
     <a href="#" class="kembali" id="linkKembali">&larr; Kembali</a>
     <h1>Pilih Slot Parkir</h1>
     <p id="deskripsi"></p>
-    <!-- Preview tipe: hapus di Blade -->
-    <div class="preview-tipe">
-        Preview tipe:
-        <select id="pilihTipe">
-            <option value="woman">Woman Parking (W)</option>
-            <option value="ev">EV Charging (V)</option>
-            <option value="priority">Priority Parking (P)</option>
-            <option value="regular">Parkir Reguler (N)</option>
-        </select>
-    </div>
+    @if (session('error'))
+        <p class="pesan pesan-error" role="alert">{{ session('error') }}</p>
+    @endif
+    @if ($bannerTutup)
+        <p class="pesan pesan-info" role="status">{{ $bannerTutup }}</p>
+    @endif
+    @unless ($bisaPesan)
+        <p class="pesan pesan-info" role="status">Pemesanan tipe ini segera hadir. Denah hanya untuk dilihat.</p>
+    @endunless
 </header>
 
 <main class="wrap">
-    <form id="formPesan" onsubmit="return false;" style="display:contents">
+    <form id="formPesan" method="POST" action="{{ route('pesan-slot') }}" style="display:contents">
+        @csrf
+        <input type="hidden" name="lokasi" value="{{ $lokasi->id }}">
+        <input type="hidden" name="tipe" value="{{ $tipe }}">
         <section class="kartu">
             <div class="lantai-nav">
                 <button type="button" id="prev" aria-label="Lantai sebelumnya">&lsaquo;</button>
@@ -262,8 +259,8 @@
                 <strong id="tarif"></strong>
             </div>
 
-            <p class="simulasi"><label><input type="checkbox" id="gagal"> Simulasikan gagal menyimpan pesanan</label></p>
-            <button type="button" class="btn" id="btnPesan" disabled>Pesan Slot</button>
+            <p class="simulasi"><label><input type="checkbox" id="gagal" name="gagal" value="1"> Simulasikan gagal menyimpan pesanan</label></p>
+            <button type="submit" class="btn" id="btnPesan" disabled>Pesan Slot</button>
             <a href="#" class="btn sec" id="linkBatal">Batal</a>
         </aside>
     </form>
@@ -271,54 +268,27 @@
 
 <script>
     // ==========================================================
-    // KONFIGURASI
-    // urlKembali: di Blade diganti dengan {{ route('lokasi.tipe', $lokasi['id']) }}
-    // tipeAktif : di Blade diganti dengan $tipe dari controller
+    // DATA DARI SERVER (SlotController@index)
     // ==========================================================
-    const urlKembali = '/lokasi/1/tipe';
-    // Tipe diambil dari ?tipe= di URL (kode controller -> kunci prototipe ini).
-    const PETA_TIPE = { reguler: 'regular', wanita: 'woman', prioritas: 'priority', ev: 'ev' };
-    let tipeAktif = PETA_TIPE[new URLSearchParams(window.location.search).get('tipe')] || 'regular';
+    const urlKembali = @json(route('lokasi.tipe', $lokasi->id));
+    const bisaPesan = @json($bisaPesan && ! $tutup);
 
     const lokasi = {
-        id: 1,
-        nama: 'Parkir City of Tomorrow',
-        alamat: 'Jl. Ahmad Yani No. 288, Gayungan, Surabaya',
-        tarif: 4000,
+        id: @json($lokasi->id),
+        nama: @json($lokasi->nama),
+        alamat: @json($lokasi->alamat),
+        tarif: @json($lokasi->tarif),
     };
 
-    // Setiap tipe punya awalan kode dan label sendiri
-    const TIPE = {
-        woman:    { label: 'Woman Parking',    prefix: 'W', ev: false },
-        ev:       { label: 'EV Charging',      prefix: 'V', ev: true, tarifEv: 3500 },
-        priority: { label: 'Priority Parking', prefix: 'P', ev: false },
-        regular:  { label: 'Parkir Reguler',   prefix: 'N', ev: false },
+    // Konfigurasi tipe yang sedang dilihat
+    const cfg = {
+        label: @json($labelTipe),
+        ev: @json($adalahEv),
+        tarifEv: @json($tarifEv),
     };
 
-    const KONEKTOR_EV = [
-        { konektor: 'CCS2',    daya: 60 },
-        { konektor: 'Type 2',  daya: 22 },
-        { konektor: 'CHAdeMO', daya: 50 },
-    ];
-
-    // Membuat data slot untuk satu tipe (2 lantai, 6 slot per lantai)
-    // Slot ke-4, ke-8, dst dibuat terisi sebagai contoh
-    function buatLantai(prefix, ev) {
-        let n = 0;
-        return [1, 2].map(nomor => ({
-            nomor,
-            slot: Array.from({ length: 6 }, () => {
-                n++;
-                const k = KONEKTOR_EV[(n - 1) % KONEKTOR_EV.length];
-                return {
-                    kode: `${prefix}-${String(n).padStart(2, '0')}`,
-                    terisi: n % 4 === 0,
-                    konektor: ev ? k.konektor : null,
-                    daya: ev ? k.daya : null,
-                };
-            }),
-        }));
-    }
+    // Slot per lantai dari tabel slot_parkir: [{ nomor, slot: [{ kode, lantai, konektor, daya, terisi }] }]
+    const lantaiData = @json($perLantai->map(fn ($daftar, $nomor) => ['nomor' => $nomor, 'slot' => $daftar->values()])->values());
 
     // ---------- Ikon ----------
     const ikonMobil = `
@@ -346,13 +316,10 @@
     const barisCharger = document.getElementById('barisCharger');
     const isiCharger = document.getElementById('isiCharger');
     const barisTarifEv = document.getElementById('barisTarifEv');
-    const pilihTipe = document.getElementById('pilihTipe');
     let indeks = 0;
 
     // ---------- Render utama (dipanggil ulang saat tipe berubah) ----------
     function render() {
-        const cfg = TIPE[tipeAktif];
-        const lantaiData = buatLantai(cfg.prefix, cfg.ev);
         const semuaSlot = lantaiData.flatMap(l => l.slot);
         const tersedia = semuaSlot.filter(s => !s.terisi).length;
 
@@ -378,6 +345,14 @@
         barisSlot.classList.add('sembunyi');
         barisCharger.classList.add('sembunyi');
         btnPesan.disabled = true;
+
+        // Tidak ada slot sama sekali untuk tipe ini di lokasi ini
+        if (!semuaSlot.length) {
+            denah.innerHTML = '<p class="pintu">Tidak ada slot parkir yang tersedia.</p>';
+            prev.disabled = true;
+            next.disabled = true;
+            return;
+        }
 
         // Denah
         denah.innerHTML = lantaiData.map((lantai, idx) => {
@@ -422,6 +397,7 @@
 
     function tampilLantai() {
         const panels = panelGrid();
+        if (!panels.length) { return; }
         panels.forEach((p, n) => p.classList.toggle('aktif', n === indeks));
         label.textContent = 'Lantai ' + panels[indeks].dataset.lantai;
         prev.disabled = indeks === 0;
@@ -437,28 +413,17 @@
                 isiSlot.textContent = `${r.value} (Lantai ${r.dataset.lantai})`;
                 barisSlot.classList.remove('sembunyi');
 
-                if (TIPE[tipeAktif].ev) {
+                if (cfg.ev) {
                     isiCharger.textContent = `${r.dataset.konektor} · ${r.dataset.daya} kW`;
                     barisCharger.classList.remove('sembunyi');
                 }
-                btnPesan.disabled = false;
+                btnPesan.disabled = !bisaPesan;
             });
         });
     }
 
-    // ---------- Ganti tipe (preview) ----------
-    pilihTipe.value = tipeAktif;
-    pilihTipe.addEventListener('change', () => {
-        tipeAktif = pilihTipe.value;
-        render();
-    });
-
-    // ---------- Pesan ----------
-    btnPesan.addEventListener('click', () => {
-        const gagal = document.getElementById('gagal').checked;
-        alert(gagal ? 'Gagal menyimpan pesanan (simulasi).' : 'Slot berhasil dipesan!');
-    });
-
+    // Tombol "Pesan Slot" mengirim form ke POST /pesan-slot (SlotController@pesan).
+    // Bila berhasil, server mengarahkan ke halaman Pembayaran.
     render();
 </script>
 </body>
