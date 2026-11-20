@@ -1,6 +1,6 @@
 {{--
     Ringkasan check-out (halaman Check-out Berhasil & Struk).
-    $struk: data dari session 'struk_terakhir' (CheckoutController::proses).
+    $struk: booking selesai terbaru milik pengguna (PesananSesi::strukTerakhir), bentuk array pesanan.
     Biaya sudah dibayar di muka: Total biaya parkir = jumlah yang sudah dibayar.
     Durasi aktual hanya informasi; tidak ada pelunasan atau pengembalian.
     $lengkap = true (struk): tambah alamat, metode, no. transaksi, dan data charger EV.

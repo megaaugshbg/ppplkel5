@@ -6,6 +6,8 @@
 @section('content')
 <div class="mx-auto max-w-xl space-y-5 px-4 pt-5 md:px-6 md:pt-8">
 
+    <x-tab-booking aktif="aktif" />
+
     <div>
         <h1 class="text-xl font-bold md:text-2xl">Booking Aktif</h1>
         <p class="text-sm text-slate-500">Booking yang sedang berjalan.</p>
@@ -34,12 +36,6 @@
             </div>
         </div>
     @else
-        @if (! empty($pesanan['contoh']))
-            <div role="status" class="rounded-2xl border border-line bg-surface-alt px-4 py-3 text-sm">
-                Ini <strong>data contoh</strong>, jadi status slot di database tidak ikut diubah.
-            </div>
-        @endif
-
         {{-- Kartu booking yang sedang parkir --}}
         <section class="flex items-center gap-4 rounded-2xl border border-line bg-surface p-4">
             <span class="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-primary text-lg font-bold text-on-primary">{{ $pesanan['slot'] }}</span>

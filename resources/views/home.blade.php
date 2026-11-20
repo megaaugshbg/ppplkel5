@@ -69,7 +69,7 @@
 
         {{-- Riwayat --}}
         <div class="md:max-w-xl">
-            <x-beranda.riwayat-terakhir :items="$riwayat" />
+            <x-beranda.riwayat-terakhir :items="$riwayat" :url-semua="route('riwayat')" />
         </div>
     </div>
 @endsection

@@ -40,9 +40,9 @@
         <div>
             <label for="barcode" class="mb-1 block text-sm font-medium">Kode barcode</label>
             <input id="barcode" name="barcode" value="{{ old('barcode') }}" autocomplete="off" autofocus maxlength="20"
-                   placeholder="Contoh: MKR-123" aria-describedby="ket-barcode"
+                   placeholder="Contoh: MKR-000123" aria-describedby="ket-barcode"
                    class="w-full rounded-lg border border-line bg-page px-4 py-3 text-sm uppercase tracking-wide outline-none transition focus:border-focus focus:ring-2 focus:ring-focus/20">
-            <p id="ket-barcode" class="mt-1 text-xs text-slate-500">Simulasi pemindaian: ketik kode booking yang tertera pada barcode.</p>
+            <p id="ket-barcode" class="mt-1 text-xs text-slate-500">Simulasi pemindaian: ketik kode booking yang tertera pada barcode (format MKR- diikuti 6 angka, mis. MKR-000123).</p>
         </div>
 
         <label class="flex items-center gap-2 text-xs text-slate-500">

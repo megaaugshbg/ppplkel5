@@ -48,5 +48,16 @@
             Kembali ke beranda
         </a>
     </div>
+
+    @unless ($sudahBayar)
+        {{-- Batalkan pesanan yang belum dibayar: booking dibatalkan, slot kembali tersedia. --}}
+        <form method="POST" action="{{ route('booking.batal') }}" onsubmit="return confirm('Batalkan pesanan {{ $pesanan['kode'] }}?')">
+            @csrf
+            <button type="submit"
+                    class="w-full rounded-xl px-4 py-2.5 text-sm font-semibold text-red-700 underline underline-offset-4 hover:opacity-80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus">
+                Batalkan pesanan
+            </button>
+        </form>
+    @endunless
 </div>
 @endsection
