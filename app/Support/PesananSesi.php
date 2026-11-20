@@ -15,6 +15,7 @@ class PesananSesi
     public const TERPESAN = 'Terpesan';
     public const SUDAH_BAYAR = 'Sudah dibayar';
     public const SUDAH_CHECKIN = 'Sudah check in';
+    public const SELESAI = 'Selesai'; // setelah check-out (disimpan di struk, bukan di pesanan aktif)
 
     public static function ambil(): array
     {
@@ -33,6 +34,18 @@ class PesananSesi
     public static function simpan(array $pesanan): void
     {
         session([self::KUNCI => $pesanan]);
+    }
+
+    /** Ada pesanan aktif di session? Berbeda dengan ambil(), TIDAK membuat data contoh. */
+    public static function ada(): bool
+    {
+        return (bool) session(self::KUNCI);
+    }
+
+    /** Hapus pesanan aktif (setelah check-out) supaya Penyewa bisa memesan lagi. */
+    public static function kosongkan(): void
+    {
+        session()->forget(self::KUNCI);
     }
 
     public static function sudahBayar(array $pesanan): bool

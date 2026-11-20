@@ -53,8 +53,12 @@ Route::middleware('auth')->group(function () {
     // Detail Booking (tujuan saat pembayaran / check in dibatalkan)
     Route::get('/booking/detail', DetailBookingController::class)->name('booking.detail');
 
-    // Lakukan Check-Out
+    // Lakukan Check-out (3.6.1): Booking Aktif -> Scan Barcode -> Berhasil -> Struk
     Route::get('/check-out', [CheckoutController::class, 'index'])->name('check-out');
+    Route::get('/check-out/scan', [CheckoutController::class, 'scan'])->name('check-out.scan');
+    Route::post('/check-out/scan', [CheckoutController::class, 'proses'])->name('check-out.proses');
+    Route::get('/check-out/berhasil', [CheckoutController::class, 'berhasil'])->name('check-out.berhasil');
+    Route::get('/check-out/struk', [CheckoutController::class, 'struk'])->name('check-out.struk');
 
     // Profil (menu Pengaturan): jenis kelamin & kartu disabilitas untuk verifikasi Woman/Priority Parking
     Route::get('/profil', [ProfilController::class, 'index'])->name('profil');
