@@ -50,11 +50,14 @@ class AuthController extends Controller
             'nama_depan'   => ['required', 'string', 'max:100'],
             'nama_belakang'=> ['nullable', 'string', 'max:100'],
             'alamat'       => ['required', 'string', 'max:255'],
+            'jenis_kelamin'=> ['required', 'in:' . User::JK_LAKI . ',' . User::JK_PEREMPUAN],
             'nik'          => ['required', 'digits:16', 'unique:users,nik'],
             'no_hp'        => ['required', 'regex:/^[0-9]{8,13}$/'],
             'email'        => ['required', 'email', 'unique:users,email'],
             'password'     => ['required', 'min:8', 'confirmed'],
         ], [
+            'jenis_kelamin.required' => 'Jenis kelamin wajib dipilih.',
+            'jenis_kelamin.in'       => 'Jenis kelamin wajib dipilih.',
             'nik.digits'      => 'NIK harus 16 digit angka.',
             'nik.unique'      => 'NIK sudah terdaftar.',
             'no_hp.regex'     => 'Nomor HP diisi tanpa +62, contoh: 81234567890.',
@@ -68,6 +71,7 @@ class AuthController extends Controller
             'email'        => $data['email'],
             'no_hp'        => '+62' . ltrim($data['no_hp'], '0'),
             'alamat'       => $data['alamat'],
+            'jenis_kelamin'=> $data['jenis_kelamin'],
             'nik'          => $data['nik'],
             'password'     => $data['password'], // di-hash otomatis oleh casts()
             'status_verif' => false,

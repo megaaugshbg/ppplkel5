@@ -8,6 +8,7 @@ use App\Http\Controllers\CheckInController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\DetailBookingController;
 use App\Http\Controllers\PembayaranController;
+use App\Http\Controllers\ProfilController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -54,6 +55,12 @@ Route::middleware('auth')->group(function () {
 
     // Lakukan Check-Out
     Route::get('/check-out', [CheckoutController::class, 'index'])->name('check-out');
+
+    // Profil (menu Pengaturan): jenis kelamin & kartu disabilitas untuk verifikasi Woman/Priority Parking
+    Route::get('/profil', [ProfilController::class, 'index'])->name('profil');
+    Route::put('/profil/jenis-kelamin', [ProfilController::class, 'updateJenisKelamin'])->name('profil.jenis-kelamin');
+    Route::post('/profil/kartu-disabilitas', [ProfilController::class, 'simpanKartu'])->name('profil.kartu');
+    Route::delete('/profil/kartu-disabilitas', [ProfilController::class, 'hapusKartu'])->name('profil.kartu.hapus');
 });
 
 // Halaman Cari Lokasi sudah digantikan beranda; tautan lama diarahkan ke /home.

@@ -3,10 +3,10 @@
     $item = [
         ['label' => 'Beranda', 'url' => route('home'),     'aktif' => request()->routeIs('home'),
          'ikon' => 'M12 3 2 12h3v8h5v-5h4v5h5v-8h3L12 3Z'],
-        // Halaman booking & pengaturan belum ada: tampil nonaktif dulu.
+        // Halaman booking belum ada: tampil nonaktif dulu.
         ['label' => 'Booking', 'url' => null,               'aktif' => false,
          'ikon' => 'M4 5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-3a2 2 0 0 0 0-4V5Zm6 0v2m0 3v2m0 3v2'],
-        ['label' => 'Pengaturan', 'url' => null,            'aktif' => false,
+        ['label' => 'Pengaturan', 'url' => route('profil'), 'aktif' => request()->routeIs('profil'),
          'ikon' => 'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm7.4-3a7.4 7.4 0 0 0-.1-1.2l2-1.6-2-3.4-2.4 1a7.5 7.5 0 0 0-2-1.2L14.5 3h-5l-.4 2.6a7.5 7.5 0 0 0-2 1.2l-2.4-1-2 3.4 2 1.6a7.4 7.4 0 0 0 0 2.4l-2 1.6 2 3.4 2.4-1a7.5 7.5 0 0 0 2 1.2l.4 2.6h5l.4-2.6a7.5 7.5 0 0 0 2-1.2l2.4 1 2-3.4-2-1.6c.1-.4.1-.8.1-1.2Z'],
     ];
 @endphp
