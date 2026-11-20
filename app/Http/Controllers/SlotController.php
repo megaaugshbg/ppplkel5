@@ -11,15 +11,13 @@ class SlotController extends Controller
     /**
      * Simulasi alternate flow "Slot telah dipesan pengguna lain" (slot diserobot
      * tepat saat ditekan Pesan). Kunci: nama lokasi => kode slot.
-     * HAPUS saat pemesanan sudah memakai tabel booking di database
-     * (cek ulang ketersediaan langsung dari database).
+     * HAPUS saat pemesanan sudah memakai tabel booking di database.
      */
     private const REBUTAN = [
         'Parkir Mall Galaxy' => ['R-06'],
     ];
 
-
-    // Pilih Tipe Slot (3.3.6): Normal, Woman, Priority, EV beserta jumlah slot kosong
+    // Pilih Tipe Slot (3.3.6)
     public function pilihTipe(int $lokasi)
     {
         $lokasi = LokasiParkir::denganJumlahSlot()->findOrFail($lokasi);
@@ -40,13 +38,12 @@ class SlotController extends Controller
             ]);
         })->values();
 
-        // Lokasi tutup tetap bisa dilihat; pemesanan ditolak (lihat pesan()).
         $bannerTutup = $this->bannerTutup($lokasi);
 
         return view('pilih-tipe', compact('lokasi', 'tipe', 'bannerTutup'));
     }
 
-    // Cari Slot Parkir (3.3.7): denah lantai dan status slot
+    // Cari Slot Parkir (3.3.7)
     public function index(Request $request, int $lokasi)
     {
         $lokasi = LokasiParkir::findOrFail($lokasi);
@@ -56,18 +53,36 @@ class SlotController extends Controller
             return redirect()->route('lokasi.tipe', $lokasi->id);
         }
 
-        $slots = $this->daftarSlot($lokasi->id, $tipe);
-        $tersedia = count(array_filter($slots, fn ($s) => ! $s['terisi']));
+        $adalahEv = $tipe === SlotParkir::TIPE_EV;
+
+        // Filter konektor hanya berlaku untuk EV.
+        $konektor = $adalahEv && in_array($request->query('konektor'), SlotParkir::KONEKTOR, true)
+            ? $request->query('konektor')
+            : null;
+
+        $semuaSlot = $this->daftarSlot($lokasi->id, $tipe);
+        $slots = $konektor
+            ? array_values(array_filter($semuaSlot, fn ($s) => $s['konektor'] === $konektor))
+            : $semuaSlot;
+
+        // Chip filter: hanya konektor yang benar-benar ada di lokasi ini.
+        $daftarKonektor = $adalahEv
+            ? collect($semuaSlot)->pluck('konektor')->filter()->unique()->sort()->values()->all()
+            : [];
 
         return view('slot-parkir', [
-            'lokasi' => $lokasi,
-            'tipe' => $tipe,
-            'labelTipe' => SlotParkir::LABEL[$tipe],
-            'bisaPesan' => in_array($tipe, SlotParkir::TIPE, true),
-            'tutup' => ! $lokasi->sedang_buka,
-            'bannerTutup' => $this->bannerTutup($lokasi),
-            'perLantai' => collect($slots)->groupBy('lantai'),
-            'tersedia' => $tersedia,
+            'lokasi'         => $lokasi,
+            'tipe'           => $tipe,
+            'labelTipe'      => SlotParkir::LABEL[$tipe],
+            'bisaPesan'      => in_array($tipe, SlotParkir::TIPE, true),
+            'tutup'          => ! $lokasi->sedang_buka,
+            'bannerTutup'    => $this->bannerTutup($lokasi),
+            'perLantai'      => collect($slots)->groupBy('lantai'),
+            'tersedia'       => count(array_filter($slots, fn ($s) => ! $s['terisi'])),
+            'adalahEv'       => $adalahEv,
+            'daftarKonektor' => $daftarKonektor,
+            'konektor'       => $konektor,
+            'tarifEv'        => $lokasi->tarif_ev_kwh,
         ]);
     }
 
@@ -78,7 +93,7 @@ class SlotController extends Controller
         $tipe = $request->input('tipe', 'reguler');
         $balik = route('slot-parkir', ['lokasi' => $idLokasi, 'tipe' => $tipe]);
 
-        // Priority & EV: denah boleh dilihat, pemesanan belum dibuka.
+        // Prioritas: denah boleh dilihat, pemesanan belum dibuka.
         if (in_array($tipe, SlotParkir::SEMUA_TIPE, true) && ! in_array($tipe, SlotParkir::TIPE, true)) {
             return redirect($balik)->with('error', 'Pemesanan tipe ini segera hadir.');
         }
@@ -114,6 +129,11 @@ class SlotController extends Controller
             return redirect($balik)->with('error', 'Slot telah dipesan pengguna lain. Silakan pilih slot lain.');
         }
 
+        // Slot EV wajib punya data charger agar info di konfirmasi akurat.
+        if ($tipe === SlotParkir::TIPE_EV && (! $slot['konektor'] || ! $slot['daya'])) {
+            return redirect($balik)->with('error', 'Data charger slot ini belum lengkap. Silakan pilih slot lain.');
+        }
+
         // simulasi gagal menyimpan pesanan
         if ($request->boolean('gagal')) {
             return redirect($balik)->with('error', 'Terjadi kesalahan saat menyimpan pesanan. Silakan coba lagi.');
@@ -122,13 +142,16 @@ class SlotController extends Controller
         // simpan pemesanan (sementara di session, belum ke database)
         session()->push('slot_terisi', $key);
         session()->put('pesanan_terakhir', [
-            'kode' => 'MKR-' . str_pad((string) random_int(1, 999), 3, '0', STR_PAD_LEFT),
-            'lokasi' => $lokasi->nama,
-            'alamat' => $lokasi->alamat,
-            'tipe' => SlotParkir::LABEL[$tipe],
-            'slot' => $kode,
-            'tarif' => $lokasi->tarif,
-            'status' => 'Terpesan',
+            'kode'         => 'MKR-' . str_pad((string) random_int(1, 999), 3, '0', STR_PAD_LEFT),
+            'lokasi'       => $lokasi->nama,
+            'alamat'       => $lokasi->alamat,
+            'tipe'         => SlotParkir::LABEL[$tipe],
+            'slot'         => $kode,
+            'konektor'     => $tipe === SlotParkir::TIPE_EV ? $slot['konektor'] : null,
+            'daya'         => $tipe === SlotParkir::TIPE_EV ? $slot['daya'] : null,
+            'tarif'        => $lokasi->tarif,
+            'tarif_ev_kwh' => $tipe === SlotParkir::TIPE_EV ? $lokasi->tarif_ev_kwh : null,
+            'status'       => 'Terpesan',
         ]);
 
         return redirect('/konfirmasi-pesanan');
@@ -146,22 +169,21 @@ class SlotController extends Controller
 
     /**
      * Slot satu lokasi & tipe dari tabel slot_parkir, urut lantai lalu kode.
-     * terisi = status bukan 'tersedia', ATAU sudah dipesan di sesi ini
-     * (pemesanan masih disimpan di session, belum ke database).
+     * terisi = status bukan 'tersedia', ATAU sudah dipesan di sesi ini.
      */
     private function daftarSlot(int $idLokasi, string $tipe): array
     {
         $slotSesi = $this->slotTerisiDiSesi($idLokasi);
 
-        // Diurutkan di PHP (bukan orderBy('lantai')) supaya tetap jalan sebelum
-        // migration kolom lantai dijalankan: semua slot dianggap lantai 1.
         return SlotParkir::where('lokasi_parkir_id', $idLokasi)
             ->tipe($tipe)
             ->get()
             ->map(fn (SlotParkir $s) => [
-                'kode'   => $s->kode,
-                'lantai' => $s->lantai ?? 1,
-                'terisi' => $s->status !== SlotParkir::STATUS_TERSEDIA || in_array($s->kode, $slotSesi, true),
+                'kode'     => $s->kode,
+                'lantai'   => $s->lantai ?? 1,
+                'konektor' => $s->konektor,
+                'daya'     => $s->daya_kw,
+                'terisi'   => $s->status !== SlotParkir::STATUS_TERSEDIA || in_array($s->kode, $slotSesi, true),
             ])
             ->sortBy(fn ($s) => sprintf('%03d-%04d-%s', $s['lantai'], strlen($s['kode']), $s['kode'])) // R-2 sebelum R-10
             ->values()

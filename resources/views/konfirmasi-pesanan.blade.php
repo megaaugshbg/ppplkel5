@@ -1,44 +1,77 @@
-@extends('layouts.parkir')
+{{-- Konfirmasi pesanan. Menampilkan detail charger bila pesanan bertipe EV. --}}
+@extends('layouts.app')
 
-@section('judul', 'Slot Berhasil Dipesan')
-@section('deskripsi', 'Simpan kode booking kamu, lalu lanjutkan ke pembayaran.')
-@section('kembali', '/home')
+@section('content')
+<div class="mx-auto max-w-md px-4 pb-28 pt-8 md:px-6 md:pb-12">
 
-@section('style')
-    .baris { display: flex; justify-content: space-between; gap: 16px; padding: 10px 0; border-bottom: 1px solid var(--color-line); font-size: 14px; }
-    .baris:last-child { border-bottom: 0; }
-    .baris span:first-child { color: #6b7280; }
-    .baris span:last-child { color: var(--color-primary); font-weight: 600; text-align: right; }
-    .kode { text-align: center; background: var(--color-primary-soft); border: 1px solid var(--color-line); border-radius: 14px; padding: 28px 16px; }
-    .kode small { display: block; color: #6b7280; font-size: 13px; }
-    .kode strong { display: block; font-size: 56px; color: var(--color-primary); letter-spacing: 3px; line-height: 1.1; margin: 6px 0; }
-    .kode span { font-size: 13px; color: var(--color-primary); opacity: .8; }
-@endsection
-
-@section('isi')
-    <div class="info ok">Pesanan Anda berhasil disimpan.</div>
-
-    <div class="grid">
-        <section class="kartu">
-            <h2>Detail Pesanan</h2>
-            <div class="baris"><span>Kode booking</span><span>{{ $pesanan['kode'] }}</span></div>
-            <div class="baris"><span>Tempat</span><span>{{ $pesanan['lokasi'] }}</span></div>
-            <div class="baris"><span>Alamat</span><span>{{ $pesanan['alamat'] }}</span></div>
-            <div class="baris"><span>Tipe parkir</span><span>{{ $pesanan['tipe'] }}</span></div>
-            <div class="baris"><span>Tarif</span><span>Rp {{ number_format($pesanan['tarif'], 0, ',', '.') }} / jam</span></div>
-            <div class="baris"><span>Status</span><span>{{ $pesanan['status'] }}</span></div>
-        </section>
-
-        <aside class="panel-samping kartu">
-            <div class="kode">
-                <small>Kode Parkir</small>
-                <strong>{{ $pesanan['slot'] }}</strong>
-                <span>{{ $pesanan['lokasi'] }}</span>
-            </div>
-            <div style="margin-top:16px">
-                <a href="/pembayaran" class="btn">Lanjut ke Pembayaran</a>
-                <a href="/home" class="btn sec">Kembali ke Beranda</a>
-            </div>
-        </aside>
+    <div class="mb-6 text-center">
+        <div class="mx-auto mb-3 grid h-14 w-14 place-items-center rounded-full bg-emerald-100 text-emerald-600">
+            <svg class="h-7 w-7" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg>
+        </div>
+        <h1 class="text-xl font-semibold text-primary">Pesanan berhasil</h1>
+        <p class="text-sm text-slate-500">Kode pesanan <strong class="text-primary">{{ $pesanan['kode'] }}</strong></p>
     </div>
+
+    <dl class="divide-y divide-line rounded-2xl border border-line bg-surface text-sm">
+        <div class="flex justify-between gap-4 p-3">
+            <dt class="text-slate-500">Lokasi</dt>
+            <dd class="text-right font-medium text-primary">{{ $pesanan['lokasi'] }}</dd>
+        </div>
+        <div class="flex justify-between gap-4 p-3">
+            <dt class="text-slate-500">Alamat</dt>
+            <dd class="text-right">{{ $pesanan['alamat'] }}</dd>
+        </div>
+        <div class="flex justify-between gap-4 p-3">
+            <dt class="text-slate-500">Tipe slot</dt>
+            <dd class="text-right">{{ $pesanan['tipe'] }}</dd>
+        </div>
+        <div class="flex justify-between gap-4 p-3">
+            <dt class="text-slate-500">Slot</dt>
+            <dd class="text-right font-medium text-primary">{{ $pesanan['slot'] }}</dd>
+        </div>
+
+        @if (! empty($pesanan['konektor']))
+            <div class="flex justify-between gap-4 p-3">
+                <dt class="text-slate-500">Charger</dt>
+                <dd class="text-right">⚡ {{ $pesanan['konektor'] }} · {{ $pesanan['daya'] }} kW</dd>
+            </div>
+        @endif
+
+        <div class="flex justify-between gap-4 p-3">
+            <dt class="text-slate-500">Tarif parkir</dt>
+            <dd class="text-right">Rp {{ number_format($pesanan['tarif'], 0, ',', '.') }}/jam</dd>
+        </div>
+
+        @if (! empty($pesanan['tarif_ev_kwh']))
+            <div class="flex justify-between gap-4 p-3">
+                <dt class="text-slate-500">Tarif charging</dt>
+                <dd class="text-right">Rp {{ number_format($pesanan['tarif_ev_kwh'], 0, ',', '.') }}/kWh</dd>
+            </div>
+        @endif
+
+        <div class="flex justify-between gap-4 p-3">
+            <dt class="text-slate-500">Status</dt>
+            <dd class="text-right"><span class="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">{{ $pesanan['status'] }}</span></dd>
+        </div>
+    </dl>
+
+    @if (! empty($pesanan['tarif_ev_kwh']))
+        <p class="mt-3 rounded-xl bg-emerald-50 p-3 text-xs text-emerald-800">
+            Biaya charging dihitung sesuai pemakaian listrik (kWh) dan ditagihkan terpisah dari tarif parkir.
+        </p>
+    @endif
+
+    <div class="mt-6 flex flex-col gap-2 sm:flex-row">
+        <a href="{{ route('pembayaran') }}"
+           class="flex-1 rounded-xl bg-primary px-4 py-3 text-center text-sm font-semibold text-white hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus">
+            Lanjut ke pembayaran
+        </a>
+        <a href="{{ route('home') }}"
+           class="flex-1 rounded-xl border border-line px-4 py-3 text-center text-sm font-medium text-primary hover:bg-surface-alt focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus">
+            Kembali ke beranda
+        </a>
+    </div>
+</div>
+
+<x-nav-bawah />
 @endsection

@@ -20,16 +20,17 @@ class LokasiParkir extends Model
 
     protected $fillable = [
         'nama', 'alamat', 'area', 'kota', 'latitude', 'longitude',
-        'foto', 'jam_buka', 'jam_tutup', 'tarif', 'buka',
+        'foto', 'jam_buka', 'jam_tutup', 'tarif', 'tarif_ev_kwh', 'buka',
     ];
 
     protected function casts(): array
     {
         return [
-            'tarif'     => 'integer',
-            'buka'      => 'boolean',
-            'latitude'  => 'float',
-            'longitude' => 'float',
+            'tarif'        => 'integer',
+            'tarif_ev_kwh' => 'integer',
+            'buka'         => 'boolean',
+            'latitude'     => 'float',
+            'longitude'    => 'float',
         ];
     }
 

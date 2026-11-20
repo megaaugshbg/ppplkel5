@@ -8,20 +8,16 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class SlotParkir extends Model
 {
-    // Nilai kolom `tipe` (maks. 10 karakter).
     public const TIPE_REGULER   = 'reguler';
     public const TIPE_WANITA    = 'wanita';
     public const TIPE_PRIORITAS = 'prioritas';
     public const TIPE_EV        = 'ev';
 
-    // Tipe yang SUDAH bisa dipesan lewat alur pemesanan (untuk validasi pemesanan).
-    // Prioritas belum dimasukkan karena butuh verifikasi kartu disabilitas; EV menyusul.
-    public const TIPE = [self::TIPE_REGULER, self::TIPE_WANITA];
+    // Tipe yang sudah bisa dipesan. Prioritas menunggu verifikasi kartu disabilitas.
+    public const TIPE = [self::TIPE_REGULER, self::TIPE_WANITA, self::TIPE_EV];
 
-    // Semua tipe slot yang ada di data (untuk hitungan & tampilan beranda).
     public const SEMUA_TIPE = [self::TIPE_REGULER, self::TIPE_WANITA, self::TIPE_PRIORITAS, self::TIPE_EV];
 
-    // Nama tipe yang ditampilkan ke pengguna (sesuai CDR).
     public const LABEL = [
         self::TIPE_REGULER   => 'Normal Parking',
         self::TIPE_WANITA    => 'Woman Parking',
@@ -29,7 +25,9 @@ class SlotParkir extends Model
         self::TIPE_EV        => 'EV Charging Parking',
     ];
 
-    // Nilai kolom `status`.
+    /** Jenis konektor charger yang didukung. */
+    public const KONEKTOR = ['Type 2', 'CCS2', 'CHAdeMO'];
+
     public const STATUS_TERSEDIA = 'tersedia';
     public const STATUS_TERPESAN = 'terpesan';
     public const STATUS_TERISI   = 'terisi';
@@ -37,11 +35,11 @@ class SlotParkir extends Model
 
     protected $table = 'slot_parkir';
 
-    protected $fillable = ['lokasi_parkir_id', 'kode', 'tipe', 'lantai', 'status'];
+    protected $fillable = ['lokasi_parkir_id', 'kode', 'tipe', 'konektor', 'daya_kw', 'lantai', 'status'];
 
     protected function casts(): array
     {
-        return ['lantai' => 'integer'];
+        return ['lantai' => 'integer', 'daya_kw' => 'integer'];
     }
 
     public function lokasi(): BelongsTo
@@ -49,15 +47,19 @@ class SlotParkir extends Model
         return $this->belongsTo(LokasiParkir::class, 'lokasi_parkir_id');
     }
 
-    /** Slot dengan tipe tertentu (lihat konstanta TIPE_*). */
     public function scopeTipe(Builder $query, string $tipe): Builder
     {
         return $query->where('tipe', $tipe);
     }
 
-    /** Slot yang masih kosong (status 'tersedia'). */
     public function scopeTersedia(Builder $query): Builder
     {
         return $query->where('status', self::STATUS_TERSEDIA);
+    }
+
+    /** Slot dengan konektor tertentu (khusus EV). */
+    public function scopeKonektor(Builder $query, string $konektor): Builder
+    {
+        return $query->where('konektor', $konektor);
     }
 }

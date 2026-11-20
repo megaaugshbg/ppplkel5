@@ -1,141 +1,463 @@
-@extends('layouts.parkir')
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pilih Slot Parkir</title>
+<style>
+    :root {
+        --primary: #1b1870;
+        --primary-soft: #e7e5f4;
+        --surface: #ffffff;
+        --surface-alt: #eef0f4;
+        --line: #e6e1bd;
+        --header: #f5efd6;
+        --bg: #fefce9;
+        --muted: #6b7280;
+        --slot-line: #cbd5e1;
+        --focus: #3b82f6;
+        --ev: #10b981;
+    }
+    * { box-sizing: border-box; }
+    body {
+        margin: 0;
+        font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+        background: var(--bg);
+        color: #1f2937;
+    }
 
-@section('judul', 'Pilih Slot Parkir')
-@section('deskripsi', $lokasi['nama'] . ' · ' . $lokasi['alamat'])
-@section('kembali', route('lokasi.tipe', $lokasi['id']))
+    /* ---------- Header ---------- */
+    .header {
+        background: var(--header);
+        border-bottom: 1px solid var(--line);
+        padding: 22px 6vw 28px;
+    }
+    .kembali { color: var(--primary); text-decoration: none; font-size: 15px; font-weight: 600; }
+    .kembali:hover { text-decoration: underline; }
+    .header h1 { margin: 14px 0 6px; font-size: 34px; font-weight: 700; color: var(--primary); }
+    .header p { margin: 0; font-size: 17px; color: #4a4a8a; }
 
-@section('style')
-    .lantai-nav { display: flex; align-items: center; justify-content: center; gap: 18px; margin-bottom: 6px; }
-    .lantai-nav button { background: var(--color-primary); color: var(--color-on-primary); border: 0; width: 34px; height: 34px; border-radius: 50%; font-size: 18px; cursor: pointer; }
-    .lantai-nav button:disabled { background: #cbd5e1; cursor: default; }
-    .lantai-nav strong { font-size: 24px; color: var(--color-primary); min-width: 130px; text-align: center; }
-    .legend { display: flex; justify-content: center; gap: 18px; font-size: 12px; color: #4b5563; margin-bottom: 18px; }
-    .legend i { display: inline-block; width: 11px; height: 11px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
-    .denah { border: 1px solid var(--color-line); border-radius: 14px; padding: 20px; background: var(--color-surface-alt); }
+    /* Dropdown preview (hanya untuk demo standalone) */
+    .preview-tipe {
+        display: flex; align-items: center; gap: 10px;
+        margin-top: 14px; font-size: 14px; color: var(--primary); font-weight: 600;
+    }
+    .preview-tipe select {
+        padding: 6px 10px; border-radius: 8px; border: 1px solid var(--line);
+        font-family: inherit; font-size: 14px; background: #fff; color: var(--primary);
+    }
+
+    /* ---------- Layout ---------- */
+    .wrap {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 380px;
+        gap: 28px;
+        padding: 36px 6vw 48px;
+        align-items: start;
+    }
+    .kartu {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        box-shadow: 0 4px 16px rgba(27, 24, 112, .05);
+        padding: 28px;
+    }
+
+    /* ---------- Navigasi lantai ---------- */
+    .lantai-nav { display: flex; align-items: center; justify-content: center; gap: 24px; }
+    .lantai-nav button {
+        background: var(--primary); color: #fff; border: 0;
+        width: 42px; height: 42px; border-radius: 50%;
+        font-size: 22px; line-height: 1; cursor: pointer;
+    }
+    .lantai-nav button:disabled { background: #cfd5e3; cursor: default; }
+    .lantai-nav strong { min-width: 160px; text-align: center; font-size: 30px; color: var(--primary); }
+    .lantai-lokasi { text-align: center; font-size: 14px; color: var(--muted); margin: 4px 0 14px; }
+    .legend {
+        display: flex; justify-content: center; flex-wrap: wrap;
+        gap: 10px 22px; font-size: 14px; color: #4b5563; margin-bottom: 22px;
+    }
+    .legend span { display: inline-flex; align-items: center; gap: 6px; }
+    .legend i { display: inline-block; width: 13px; height: 13px; border-radius: 3px; }
+
+    /* ---------- Denah ---------- */
+    .denah {
+        border: 1px solid var(--line); border-radius: 16px;
+        padding: 26px 22px 18px; background: var(--surface);
+    }
     .panel { display: none; }
-    .panel.aktif { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 120px; }
-    .kolom { display: flex; flex-direction: column; gap: 12px; }
-    .slot { position: relative; display: block; }
-    .slot input { position: absolute; opacity: 0; }
-    .slot span { display: flex; align-items: center; justify-content: space-between; height: 56px; padding: 0 16px; border: 1.5px solid var(--color-primary); border-radius: 10px; background: var(--color-surface); color: var(--color-primary); font-weight: 700; font-size: 14px; cursor: pointer; }
-    .slot span:hover { background: var(--color-primary-soft); }
-    .slot input:checked + span { background: var(--color-primary); color: var(--color-on-primary); }
-    .slot input:focus-visible + span { outline: 2px solid var(--color-focus); outline-offset: 2px; }
-    .slot.terisi span { background: #e5e7eb; border-color: #d1d5db; color: #9ca3af; cursor: not-allowed; }
-    .pintu { text-align: center; font-size: 13px; color: #6b7280; margin: 16px 0 0; }
-    .baris { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--color-line); font-size: 14px; }
-    .baris span:first-child { color: #6b7280; }
-    .baris span:last-child { color: var(--color-primary); font-weight: 600; text-align: right; }
-    .total { display: flex; justify-content: space-between; align-items: center; margin: 14px 0; }
-    .total strong { color: var(--color-primary); font-size: 20px; }
-    .simulasi { font-size: 12px; color: #6b7280; margin: 0 0 14px; }
-    .btn:disabled { background: var(--color-surface-alt); color: var(--color-primary); opacity: .6; cursor: not-allowed; }
-    .segera { text-align: center; font-size: 13px; font-weight: 600; color: var(--color-primary); margin: 8px 0 12px; }
-    .info.tutup { background: var(--color-primary-soft); color: var(--color-primary); border: 1px solid var(--color-line); font-weight: 600; }
-    @media (max-width: 640px) { .panel.aktif { gap: 12px 24px; } }
-@endsection
+    .panel.aktif { display: grid; grid-template-columns: 1fr 90px 1fr; }
+    .kolom { display: flex; flex-direction: column; border-top: 2px solid var(--slot-line); }
+    .kolom.kiri { border-left: 2px solid var(--slot-line); }
+    .kolom.kanan { border-right: 2px solid var(--slot-line); }
+    .lorong { position: relative; }
+    .lorong::before {
+        content: ""; position: absolute; top: 0; bottom: 0; left: 50%;
+        border-left: 2px dashed #e2e8f0;
+    }
 
-@section('isi')
-    @if ($bannerTutup)
-        <div class="info tutup" role="status">{{ $bannerTutup }}</div>
-    @endif
+    .bay { position: relative; display: block; }
+    .bay input { position: absolute; opacity: 0; pointer-events: none; }
+    .bay-box {
+        position: relative; display: flex; flex-direction: column;
+        align-items: center; justify-content: center; gap: 4px;
+        height: 104px; border-bottom: 2px solid var(--slot-line);
+        color: var(--primary); cursor: pointer; transition: background .15s;
+        overflow: hidden;
+    }
+    .bay:not(.terisi):hover .bay-box { background: var(--primary-soft); }
+    .bay input:focus-visible + .bay-box { outline: 2px solid var(--focus); outline-offset: -3px; }
+    .bay input:checked + .bay-box { background: var(--primary-soft); }
+    .bay.terisi .bay-box { cursor: not-allowed; }
 
-    @if (session('error'))
-        <div class="info warn">{{ session('error') }}</div>
-    @endif
+    .bay-kode {
+        position: absolute; bottom: 8px;
+        font-size: 14px; font-weight: 700; color: var(--primary);
+    }
+    .kiri .bay-kode { left: 10px; }
+    .kanan .bay-kode { right: 10px; }
+    .bay.terisi .bay-kode { color: #94a3b8; }
 
-    @if ($tersedia === 0)
-        <div class="info warn">Tidak ada slot parkir yang tersedia. Silakan pilih tipe atau lokasi lain.</div>
-        <a href="{{ route('lokasi.tipe', $lokasi['id']) }}" class="btn sec" style="max-width:220px">Kembali</a>
-    @else
-        <form method="POST" action="{{ route('pesan-slot') }}" class="grid">
-            @csrf
-            <input type="hidden" name="lokasi" value="{{ $lokasi['id'] }}">
-            <input type="hidden" name="tipe" value="{{ $tipe }}">
+    /* Mobil: statis untuk slot terisi, animasi untuk slot yang dipilih */
+    .mobil { width: 104px; height: 49px; color: #475569; flex-shrink: 0; }
+    .kanan .mobil { transform: scaleX(-1); }
+    .mobil-pilih { display: none; color: var(--primary); }
+    .bay input:checked + .bay-box .mobil-pilih {
+        display: block;
+        animation: mobilMasuk .45s cubic-bezier(.2, .8, .2, 1) both;
+    }
+    @keyframes mobilMasuk {
+        0%   { translate: 0 -24px; opacity: 0; }
+        60%  { translate: 0 3px;   opacity: 1; }
+        100% { translate: 0 0;     opacity: 1; }
+    }
 
-            <section class="kartu">
-                <div class="lantai-nav">
-                    <button type="button" id="prev" aria-label="Lantai sebelumnya">&lsaquo;</button>
-                    <strong id="labelLantai">Lantai 1</strong>
-                    <button type="button" id="next" aria-label="Lantai berikutnya">&rsaquo;</button>
-                </div>
-                <div class="legend">
-                    <span><i style="background:#e5e7eb"></i>Terisi</span>
-                    <span><i style="background:var(--color-surface);border:1.5px solid var(--color-primary)"></i>Tersedia ({{ $tersedia }})</span>
-                    <span><i style="background:var(--color-primary)"></i>Dipilih</span>
-                </div>
+    .tp { display: none; font-size: 13px; font-weight: 700; color: var(--primary); }
+    .bay input:checked + .bay-box .tp {
+        display: block;
+        animation: teksMuncul .35s ease-out .15s both;
+    }
+    @keyframes teksMuncul {
+        from { opacity: 0; transform: translateY(4px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
 
-                <div class="denah">
-                    @foreach ($perLantai as $lantai => $daftar)
-                        @php
-                            $half = (int) ceil($daftar->count() / 2);
-                            $kolom = [$daftar->take($half), $daftar->slice($half)];
-                        @endphp
-                        <div class="panel {{ $loop->first ? 'aktif' : '' }}" data-lantai="{{ $lantai }}">
-                            @foreach ($kolom as $isi)
-                                <div class="kolom">
-                                    @foreach ($isi as $s)
-                                        <label class="slot {{ $s['terisi'] ? 'terisi' : '' }}">
-                                            <input type="radio" name="slot" value="{{ $s['kode'] }}" {{ $s['terisi'] ? 'disabled' : '' }}>
-                                            <span>{{ $s['kode'] }} @if ($s['terisi'])<em style="font-style:normal">&#128663;</em>@endif</span>
-                                        </label>
-                                    @endforeach
-                                </div>
-                            @endforeach
-                        </div>
-                    @endforeach
-                    <p class="pintu">&darr; Pintu Masuk</p>
-                </div>
-            </section>
+    /* ---------- EV: chip konektor ---------- */
+    .ev-info {
+        position: absolute; top: 10px;
+        display: inline-flex; align-items: center; gap: 4px;
+        font-size: 12px; font-weight: 600; color: var(--primary); white-space: nowrap;
+    }
+    .kiri .ev-info { left: 10px; }
+    .kanan .ev-info { right: 10px; }
+    .ev-info svg { width: 13px; height: 13px; color: var(--ev); }
+    .bay.terisi .ev-info, .bay.terisi .ev-info svg { color: #94a3b8; }
 
-            <aside class="panel-samping kartu">
-                <span class="pill">Ringkasan Pesanan</span>
-                <div class="baris"><span>Tempat</span><span>{{ $lokasi['nama'] }}</span></div>
-                <div class="baris"><span>Tipe parkir</span><span>{{ $labelTipe }}</span></div>
-                <div class="baris"><span>Slot tersedia</span><span>{{ $tersedia }}</span></div>
-                <div class="total">
-                    <span>Tarif parkir</span>
-                    <strong>Rp {{ number_format($lokasi['tarif'], 0, ',', '.') }} / jam</strong>
-                </div>
+    .pintu { text-align: center; font-size: 14px; color: var(--muted); margin: 18px 0 0; line-height: 1.5; }
 
-                @if ($tutup)
-                    {{-- Lokasi tutup: denah tetap tampil, pemesanan ditolak (juga dicek di server). --}}
-                    <button type="submit" class="btn" disabled aria-describedby="ket-pesan">Pesan Slot</button>
-                    <p id="ket-pesan" class="segera">Lokasi sedang tutup</p>
-                @elseif ($bisaPesan)
-                    <p class="simulasi"><label><input type="checkbox" name="gagal" value="1"> Simulasikan gagal menyimpan pesanan</label></p>
+    /* ---------- Ringkasan ---------- */
+    .panel-samping { position: sticky; top: 24px; }
+    .pill {
+        display: inline-block; background: var(--primary); color: #fff;
+        padding: 10px 20px; border-radius: 999px; font-size: 15px; font-weight: 600;
+    }
+    .baris {
+        display: flex; justify-content: space-between; gap: 12px;
+        padding: 12px 0; border-bottom: 1px solid var(--line); font-size: 15px;
+    }
+    .baris:first-of-type { margin-top: 18px; }
+    .baris span:first-child { color: var(--muted); }
+    .baris span:last-child { color: var(--primary); font-weight: 600; text-align: right; }
+    .baris.sembunyi { display: none; }
 
-                    <button type="submit" class="btn">Pesan Slot</button>
-                @else
-                    {{-- Priority & EV: denah boleh dilihat, pemesanan belum dibuka. --}}
-                    <button type="submit" class="btn" disabled aria-describedby="ket-pesan">Pesan Slot</button>
-                    <p id="ket-pesan" class="segera">Segera hadir</p>
-                @endif
-                <a href="{{ route('lokasi.tipe', $lokasi['id']) }}" class="btn sec">Batal</a>
-            </aside>
-        </form>
-    @endif
-@endsection
+    .total { display: flex; justify-content: space-between; align-items: center; margin: 22px 0 16px; }
+    .total span { font-size: 18px; color: var(--muted); }
+    .total strong { color: var(--primary); font-size: 24px; }
 
-@section('script')
-    <script>
-        var panel = document.querySelectorAll('.panel');
-        if (panel.length) {
-            var i = 0;
-            var label = document.getElementById('labelLantai');
-            var prev = document.getElementById('prev');
-            var next = document.getElementById('next');
+    .simulasi { font-size: 13px; color: var(--muted); margin: 0 0 16px; }
+    .simulasi label { display: flex; align-items: center; gap: 8px; cursor: pointer; }
 
-            function tampil() {
-                panel.forEach(function (p, n) { p.classList.toggle('aktif', n === i); });
-                label.textContent = 'Lantai ' + panel[i].dataset.lantai;
-                prev.disabled = i === 0;
-                next.disabled = i === panel.length - 1;
-            }
+    .btn {
+        display: block; width: 100%; padding: 16px; border-radius: 12px;
+        font-size: 18px; font-weight: 600; text-align: center; text-decoration: none;
+        border: 2px solid var(--primary); cursor: pointer; font-family: inherit;
+        background: var(--primary); color: #fff; margin-bottom: 12px;
+        transition: transform .1s, opacity .15s;
+    }
+    .btn:not(:disabled):active { transform: scale(.98); }
+    .btn.sec { background: #fff; color: var(--primary); }
+    .btn:disabled { background: var(--surface-alt); color: var(--primary); opacity: .6; cursor: not-allowed; }
 
-            prev.addEventListener('click', function () { if (i > 0) { i--; tampil(); } });
-            next.addEventListener('click', function () { if (i < panel.length - 1) { i++; tampil(); } });
-            tampil();
+    /* ---------- Responsif ---------- */
+    @media (max-width: 960px) {
+        .wrap { grid-template-columns: 1fr; padding: 24px 16px 40px; }
+        .panel-samping { position: static; }
+        .header { padding: 20px 16px 24px; }
+        .header h1 { font-size: 28px; }
+    }
+    @media (max-width: 640px) {
+        .kartu { padding: 18px; }
+        .denah { padding: 14px 10px 10px; }
+        .panel.aktif { grid-template-columns: 1fr 40px 1fr; }
+        .bay-box { height: 84px; }
+        .mobil { width: 70px; height: 33px; }
+        .bay-kode { font-size: 12px; }
+        .ev-info { font-size: 10px; }
+        .lantai-nav strong { font-size: 24px; min-width: 130px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .bay input:checked + .bay-box .mobil-pilih,
+        .bay input:checked + .bay-box .tp { animation: none; }
+    }
+</style>
+</head>
+<body>
+
+<header class="header">
+    <a href="#" class="kembali" id="linkKembali">&larr; Kembali</a>
+    <h1>Pilih Slot Parkir</h1>
+    <p id="deskripsi"></p>
+    <!-- Preview tipe: hapus di Blade -->
+    <div class="preview-tipe">
+        Preview tipe:
+        <select id="pilihTipe">
+            <option value="woman">Woman Parking (W)</option>
+            <option value="ev">EV Charging (V)</option>
+            <option value="priority">Priority Parking (P)</option>
+            <option value="regular">Parkir Reguler (N)</option>
+        </select>
+    </div>
+</header>
+
+<main class="wrap">
+    <form id="formPesan" onsubmit="return false;" style="display:contents">
+        <section class="kartu">
+            <div class="lantai-nav">
+                <button type="button" id="prev" aria-label="Lantai sebelumnya">&lsaquo;</button>
+                <strong id="labelLantai">Lantai 1</strong>
+                <button type="button" id="next" aria-label="Lantai berikutnya">&rsaquo;</button>
+            </div>
+            <p class="lantai-lokasi" id="namaLokasi"></p>
+
+            <div class="legend">
+                <span><i style="background:#475569"></i>Terisi</span>
+                <span><i style="background:#fff;border:1.5px solid var(--primary)"></i>Tersedia (<span id="jumlahTersedia">0</span>)</span>
+                <span><i style="background:var(--primary-soft);border:1.5px solid var(--primary)"></i>Dipilih</span>
+            </div>
+
+            <div class="denah" id="denah"></div>
+        </section>
+
+        <aside class="panel-samping kartu">
+            <span class="pill">Ringkasan Pesanan</span>
+            <div class="baris"><span>Tempat</span><span id="ringkasTempat"></span></div>
+            <div class="baris"><span>Tipe parkir</span><span id="ringkasTipe"></span></div>
+            <div class="baris"><span>Slot tersedia</span><span id="ringkasTersedia">0</span></div>
+            <div class="baris sembunyi" id="barisSlot"><span>Slot dipilih</span><span id="isiSlot">-</span></div>
+            <div class="baris sembunyi" id="barisCharger"><span>Charger</span><span id="isiCharger">-</span></div>
+            <div class="baris sembunyi" id="barisTarifEv"><span>Tarif charging</span><span id="isiTarifEv"></span></div>
+
+            <div class="total">
+                <span>Tarif parkir</span>
+                <strong id="tarif"></strong>
+            </div>
+
+            <p class="simulasi"><label><input type="checkbox" id="gagal"> Simulasikan gagal menyimpan pesanan</label></p>
+            <button type="button" class="btn" id="btnPesan" disabled>Pesan Slot</button>
+            <a href="#" class="btn sec" id="linkBatal">Batal</a>
+        </aside>
+    </form>
+</main>
+
+<script>
+    // ==========================================================
+    // KONFIGURASI
+    // urlKembali: di Blade diganti dengan {{ route('lokasi.tipe', $lokasi['id']) }}
+    // tipeAktif : di Blade diganti dengan $tipe dari controller
+    // ==========================================================
+    const urlKembali = '/lokasi/1/tipe';
+    let tipeAktif = 'woman';
+
+    const lokasi = {
+        id: 1,
+        nama: 'Parkir City of Tomorrow',
+        alamat: 'Jl. Ahmad Yani No. 288, Gayungan, Surabaya',
+        tarif: 4000,
+    };
+
+    // Setiap tipe punya awalan kode dan label sendiri
+    const TIPE = {
+        woman:    { label: 'Woman Parking',    prefix: 'W', ev: false },
+        ev:       { label: 'EV Charging',      prefix: 'V', ev: true, tarifEv: 3500 },
+        priority: { label: 'Priority Parking', prefix: 'P', ev: false },
+        regular:  { label: 'Parkir Reguler',   prefix: 'N', ev: false },
+    };
+
+    const KONEKTOR_EV = [
+        { konektor: 'CCS2',    daya: 60 },
+        { konektor: 'Type 2',  daya: 22 },
+        { konektor: 'CHAdeMO', daya: 50 },
+    ];
+
+    // Membuat data slot untuk satu tipe (2 lantai, 6 slot per lantai)
+    // Slot ke-4, ke-8, dst dibuat terisi sebagai contoh
+    function buatLantai(prefix, ev) {
+        let n = 0;
+        return [1, 2].map(nomor => ({
+            nomor,
+            slot: Array.from({ length: 6 }, () => {
+                n++;
+                const k = KONEKTOR_EV[(n - 1) % KONEKTOR_EV.length];
+                return {
+                    kode: `${prefix}-${String(n).padStart(2, '0')}`,
+                    terisi: n % 4 === 0,
+                    konektor: ev ? k.konektor : null,
+                    daya: ev ? k.daya : null,
+                };
+            }),
+        }));
+    }
+
+    // ---------- Ikon ----------
+    const ikonMobil = `
+        <svg class="mobil" aria-hidden="true" viewBox="0 0 120 56">
+            <rect x="26" y="1" width="20" height="7" rx="3.5" fill="#0f172a"/>
+            <rect x="26" y="48" width="20" height="7" rx="3.5" fill="#0f172a"/>
+            <rect x="82" y="1" width="20" height="7" rx="3.5" fill="#0f172a"/>
+            <rect x="82" y="48" width="20" height="7" rx="3.5" fill="#0f172a"/>
+            <rect x="4" y="6" width="112" height="44" rx="16" fill="currentColor"/>
+            <path d="M80 12 L99 16 Q104 28 99 40 L80 44 Z" fill="#fff" opacity=".85"/>
+            <path d="M32 14 L22 17 Q18 28 22 39 L32 42 Z" fill="#fff" opacity=".55"/>
+            <rect x="34" y="13" width="44" height="30" rx="7" fill="#fff" opacity=".22"/>
+        </svg>`;
+    const ikonMobilPilih = ikonMobil.replace('class="mobil"', 'class="mobil mobil-pilih"');
+    const ikonPetir = `<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z" fill="currentColor"/></svg>`;
+
+    // ---------- Elemen ----------
+    const denah = document.getElementById('denah');
+    const label = document.getElementById('labelLantai');
+    const prev = document.getElementById('prev');
+    const next = document.getElementById('next');
+    const btnPesan = document.getElementById('btnPesan');
+    const barisSlot = document.getElementById('barisSlot');
+    const isiSlot = document.getElementById('isiSlot');
+    const barisCharger = document.getElementById('barisCharger');
+    const isiCharger = document.getElementById('isiCharger');
+    const barisTarifEv = document.getElementById('barisTarifEv');
+    const pilihTipe = document.getElementById('pilihTipe');
+    let indeks = 0;
+
+    // ---------- Render utama (dipanggil ulang saat tipe berubah) ----------
+    function render() {
+        const cfg = TIPE[tipeAktif];
+        const lantaiData = buatLantai(cfg.prefix, cfg.ev);
+        const semuaSlot = lantaiData.flatMap(l => l.slot);
+        const tersedia = semuaSlot.filter(s => !s.terisi).length;
+
+        // Teks statis
+        document.getElementById('linkKembali').href = urlKembali;
+        document.getElementById('linkBatal').href = urlKembali;
+        document.getElementById('deskripsi').textContent = lokasi.nama + ' · ' + lokasi.alamat;
+        document.getElementById('namaLokasi').textContent = lokasi.nama;
+        document.getElementById('ringkasTempat').textContent = lokasi.nama;
+        document.getElementById('ringkasTipe').textContent = cfg.label;
+        document.getElementById('ringkasTersedia').textContent = tersedia;
+        document.getElementById('jumlahTersedia').textContent = tersedia;
+        document.getElementById('tarif').textContent = 'Rp ' + lokasi.tarif.toLocaleString('id-ID') + ' / jam';
+
+        if (cfg.ev) {
+            barisTarifEv.classList.remove('sembunyi');
+            document.getElementById('isiTarifEv').textContent = 'Rp ' + cfg.tarifEv.toLocaleString('id-ID') + ' / kWh';
+        } else {
+            barisTarifEv.classList.add('sembunyi');
         }
-    </script>
-@endsection
+
+        // Reset pilihan
+        barisSlot.classList.add('sembunyi');
+        barisCharger.classList.add('sembunyi');
+        btnPesan.disabled = true;
+
+        // Denah
+        denah.innerHTML = lantaiData.map((lantai, idx) => {
+            const half = Math.ceil(lantai.slot.length / 2);
+            return `
+                <div class="panel ${idx === 0 ? 'aktif' : ''}" data-lantai="${lantai.nomor}">
+                    <div class="kolom kiri">${bayHtml(lantai.slot.slice(0, half), lantai.nomor, cfg.ev)}</div>
+                    <div class="lorong" aria-hidden="true"></div>
+                    <div class="kolom kanan">${bayHtml(lantai.slot.slice(half), lantai.nomor, cfg.ev)}</div>
+                </div>`;
+        }).join('') + '<p class="pintu">&darr;<br>Pintu Masuk</p>';
+
+        indeks = 0;
+        tampilLantai();
+        pasangEventSlot();
+    }
+
+    function bayHtml(daftar, nomorLantai, ev) {
+        return daftar.map(s => {
+            const konektor = ev && s.konektor
+                ? `<small class="ev-info">${ikonPetir}${s.konektor} &middot; ${s.daya} kW</small>`
+                : '';
+            const isi = s.terisi
+                ? `${ikonMobil}<span style="position:absolute;left:-9999px">Terisi</span>`
+                : `${ikonMobilPilih}<span class="tp">Terpilih</span>`;
+            return `
+                <label class="bay ${s.terisi ? 'terisi' : ''}">
+                    <input type="radio" name="slot" value="${s.kode}" data-lantai="${nomorLantai}"
+                           data-konektor="${s.konektor || ''}" data-daya="${s.daya || ''}"
+                           ${s.terisi ? 'disabled' : ''}>
+                    <span class="bay-box">
+                        ${konektor}
+                        ${isi}
+                        <b class="bay-kode">${s.kode}</b>
+                    </span>
+                </label>`;
+        }).join('');
+    }
+
+    // ---------- Navigasi lantai ----------
+    function panelGrid() { return document.querySelectorAll('.panel'); }
+
+    function tampilLantai() {
+        const panels = panelGrid();
+        panels.forEach((p, n) => p.classList.toggle('aktif', n === indeks));
+        label.textContent = 'Lantai ' + panels[indeks].dataset.lantai;
+        prev.disabled = indeks === 0;
+        next.disabled = indeks === panels.length - 1;
+    }
+    prev.addEventListener('click', () => { if (indeks > 0) { indeks--; tampilLantai(); } });
+    next.addEventListener('click', () => { if (indeks < panelGrid().length - 1) { indeks++; tampilLantai(); } });
+
+    // ---------- Pilih slot & ringkasan ----------
+    function pasangEventSlot() {
+        document.querySelectorAll('input[name="slot"]').forEach(r => {
+            r.addEventListener('change', () => {
+                isiSlot.textContent = `${r.value} (Lantai ${r.dataset.lantai})`;
+                barisSlot.classList.remove('sembunyi');
+
+                if (TIPE[tipeAktif].ev) {
+                    isiCharger.textContent = `${r.dataset.konektor} · ${r.dataset.daya} kW`;
+                    barisCharger.classList.remove('sembunyi');
+                }
+                btnPesan.disabled = false;
+            });
+        });
+    }
+
+    // ---------- Ganti tipe (preview) ----------
+    pilihTipe.value = tipeAktif;
+    pilihTipe.addEventListener('change', () => {
+        tipeAktif = pilihTipe.value;
+        render();
+    });
+
+    // ---------- Pesan ----------
+    btnPesan.addEventListener('click', () => {
+        const gagal = document.getElementById('gagal').checked;
+        alert(gagal ? 'Gagal menyimpan pesanan (simulasi).' : 'Slot berhasil dipesan!');
+    });
+
+    render();
+</script>
+</body>
+</html>
