@@ -10,6 +10,9 @@ class DetailBookingController extends Controller
     public function __invoke()
     {
         $pesanan = PesananSesi::ambil();
+        if (! $pesanan) {
+            return PesananSesi::arahkanKeBeranda();
+        }
 
         return view('detail-booking', [
             'pesanan'      => $pesanan,

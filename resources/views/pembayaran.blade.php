@@ -16,12 +16,6 @@
         <p class="text-sm text-slate-500">Cek rincian tagihan, lalu bayar sebelum check in.</p>
     </div>
 
-    @if (! empty($pesanan['contoh']))
-        <div role="status" class="rounded-2xl border border-line bg-surface-alt px-4 py-3 text-sm">
-            Belum ada pesanan dari halaman Pesan Slot, jadi yang tampil adalah <strong>data contoh</strong>.
-        </div>
-    @endif
-
     @if (session('error') || $errors->any())
         <div role="alert" class="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800">
             {{ session('error') ?? $errors->first() }}
