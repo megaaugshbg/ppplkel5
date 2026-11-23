@@ -14,10 +14,10 @@
 <a href="{{ $mal['url'] }}"
    class="group flex w-[16.5rem] shrink-0 flex-col overflow-hidden rounded-2xl border border-line bg-surface shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus md:w-full">
 
-    <div class="relative aspect-[16/10] bg-surface-alt">
+    <div class="relative aspect-[16/10] overflow-hidden bg-surface-alt">
         <img src="{{ $mal['foto'] }}" alt="" loading="lazy"
              onerror="this.onerror=null;this.src='{{ asset(\App\Models\LokasiParkir::FOTO_DEFAULT) }}'"
-             class="h-full w-full object-cover {{ $mal['buka'] ? '' : 'opacity-60 grayscale' }}">
+             class="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-105 {{ $mal['buka'] ? '' : 'opacity-60 grayscale' }}">
 
         @unless ($mal['buka'])
             <span class="absolute left-3 top-3 rounded-full bg-primary px-2.5 py-1 text-xs font-semibold text-on-primary">Tutup</span>

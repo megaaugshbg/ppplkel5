@@ -16,6 +16,21 @@ class LokasiParkir extends Model
     /** Gambar dipakai jika kolom foto kosong / file-nya tidak ada (relatif dari public/). */
     public const FOTO_DEFAULT = 'images/mal/default.png';
 
+    /**
+     * Foto bawaan per nama lahan parkir (file di public/images/mal/), dipakai bila kolom foto
+     * kosong. Kolom foto di database tetap diutamakan bila diisi.
+     */
+    public const FOTO_BAWAAN = [
+        'Parkir Tunjungan Plaza'   => 'images/mal/TunjunganPlaza.jpg',
+        'Parkir Mall Galaxy'       => 'images/mal/GalaxyMall.jpg',
+        'Parkir Pakuwon Mall'      => 'images/mal/PakuwonMall.jpg',
+        'Parkir Grand City'        => 'images/mal/GrandCity.jpg',
+        'Parkir Ciputra World'     => 'images/mal/CiputraWorld.jpg',
+        'Parkir Royal Plaza'       => 'images/mal/RoyalPlaza.jpg',
+        'Parkir City of Tomorrow'  => 'images/mal/CITO.jpg',
+        'Parkir East Coast Center' => 'images/mal/EastCoast.jpg',
+    ];
+
     protected $table = 'lokasi_parkir';
 
     protected $fillable = [
@@ -150,9 +165,11 @@ class LokasiParkir extends Model
     /** URL foto lahan parkir, atau gambar default jika belum ada. */
     protected function fotoUrl(): Attribute
     {
-        return Attribute::get(fn () => asset(
-            $this->foto && is_file(public_path($this->foto)) ? $this->foto : self::FOTO_DEFAULT
-        ));
+        return Attribute::get(function () {
+            $path = $this->foto ?: (self::FOTO_BAWAAN[$this->nama] ?? null);
+
+            return asset($path && is_file(public_path($path)) ? $path : self::FOTO_DEFAULT);
+        });
     }
 
     // ----------------------------------------------------------------- util

@@ -13,7 +13,7 @@
     <span {{ $attributes }} style="display:inline-block;font-weight:900;font-size:{{ $height * 0.7 }}px;line-height:1;color:var(--color-primary)">MARKIR<span style="font-size:.8em">.in</span></span>
 @elseif ($tone === 'on-primary')
     <span role="img" aria-label="Markir.In" {{ $attributes }}
-          style="display:block;height:{{ $height }}px;aspect-ratio:563/153;background-color:var(--color-on-primary);-webkit-mask:url('{{ $src }}') center/contain no-repeat;mask:url('{{ $src }}') center/contain no-repeat"></span>
+          style="display:block;height:{{ $height }}px;aspect-ratio:707/353;background-color:var(--color-on-primary);-webkit-mask:url('{{ $src }}') center/contain no-repeat;mask:url('{{ $src }}') center/contain no-repeat"></span>
 @else
     <img src="{{ $src }}" alt="Markir.In" {{ $attributes }} style="display:block;height:{{ $height }}px;width:auto">
 @endif

@@ -1,0 +1,64 @@
+/*
+ * Transisi dan animasi halus. Di-import dari app.css.
+ * Cara membatalkan: hapus file ini, baris @import-nya di app.css, dan dua variabel
+ * --default-transition-* di blok @theme app.css.
+ */
+
+/* 1) Pindah halaman: fade + geser tipis (Chrome/Edge 126+, Safari 18.2+). */
+@view-transition { navigation: auto; }
+
+/* Navbar atas dan navigasi bawah tetap diam saat halaman berganti. */
+header.sticky { view-transition-name: navbar-atas; }
+nav.fixed     { view-transition-name: navbar-bawah; }
+
+::view-transition-old(root) {
+    animation: 180ms cubic-bezier(.4, 0, 1, 1) both transisi-keluar;
+}
+::view-transition-new(root) {
+    animation: 320ms cubic-bezier(.22, .61, .36, 1) 80ms both transisi-masuk;
+}
+@keyframes transisi-keluar { to   { opacity: 0; } }
+@keyframes transisi-masuk  { from { opacity: 0; transform: translateY(12px); } }
+
+/* Browser tanpa View Transitions (mis. Firefox): fade-in saat halaman dibuka. */
+@supports not (view-transition-name: none) {
+    body > div, body > main { animation: 320ms cubic-bezier(.22, .61, .36, 1) both transisi-masuk; }
+}
+
+/* 2) Gulir mulus. */
+html { scroll-behavior: smooth; }
+
+/* 3) Hover, fokus, dan tekan. Ditaruh di layer base supaya kelas Tailwind tetap menang. */
+@layer base {
+    a, button, summary, label, input, select, textarea {
+        transition-property: color, background-color, border-color, box-shadow, opacity, translate, scale;
+        transition-duration: .25s;
+        transition-timing-function: cubic-bezier(.22, .61, .36, 1);
+    }
+    button:not(:disabled):active,
+    a[class*="rounded"]:active,
+    summary:active { scale: .97; }
+}
+
+/* 4) Daftar kartu muncul bertahap: kartu mal di beranda dan kartu tipe slot. */
+@keyframes muncul-naik { from { opacity: 0; translate: 0 14px; } }
+ul[aria-label="Daftar mal"] > li,
+ul.grid > li { animation: 420ms cubic-bezier(.22, .61, .36, 1) both muncul-naik; }
+ul[aria-label="Daftar mal"] > li:nth-child(2), ul.grid > li:nth-child(2) { animation-delay: 60ms; }
+ul[aria-label="Daftar mal"] > li:nth-child(3), ul.grid > li:nth-child(3) { animation-delay: 120ms; }
+ul[aria-label="Daftar mal"] > li:nth-child(4), ul.grid > li:nth-child(4) { animation-delay: 180ms; }
+ul[aria-label="Daftar mal"] > li:nth-child(n+5), ul.grid > li:nth-child(n+5) { animation-delay: 240ms; }
+
+/* 5) Logo di halaman login: muncul perlahan. */
+.logo-masuk { animation: 600ms cubic-bezier(.22, .61, .36, 1) 100ms both muncul-naik; }
+
+/* Hormati pengguna yang mematikan animasi di sistemnya. */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: .01ms !important;
+        animation-delay: 0s !important;
+        transition-duration: .01ms !important;
+        scroll-behavior: auto !important;
+    }
+    ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
+}
