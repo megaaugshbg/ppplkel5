@@ -11,7 +11,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        //
+        // Pesanan yang tidak dibayar dalam 5 menit dibatalkan otomatis
+        $middleware->web(append: [
+            \App\Http\Middleware\BatalkanPesananLewatBatas::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

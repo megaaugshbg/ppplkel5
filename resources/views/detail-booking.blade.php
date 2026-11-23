@@ -17,6 +17,12 @@
         </div>
     @endif
 
+    @isset($pesanan['batas_bayar'])
+        <p class="rounded-2xl border border-primary bg-primary-soft px-4 py-3 text-sm text-primary">
+            Bayar sebelum pukul <strong>{{ $pesanan['batas_bayar'] }} WIB</strong>. Lewat dari itu, pesanan dibatalkan otomatis.
+        </p>
+    @endisset
+
     <x-rincian-pesanan :pesanan="$pesanan">
         @if ($sudahBayar)
             <div class="flex justify-between gap-4 p-3">
