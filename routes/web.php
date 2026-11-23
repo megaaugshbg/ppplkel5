@@ -69,7 +69,9 @@ Route::middleware('auth')->group(function () {
 
     // Profil (menu Pengaturan): jenis kelamin & kartu disabilitas untuk verifikasi Woman/Priority Parking
     Route::get('/profil', [ProfilController::class, 'index'])->name('profil');
-    Route::put('/profil/jenis-kelamin', [ProfilController::class, 'updateJenisKelamin'])->name('profil.jenis-kelamin');
+    // Verifikasi SIM (Woman Parking): jenis kelamin hanya dari hasil baca SIM, tidak bisa diubah manual.
+    Route::get('/verifikasi-sim', [ProfilController::class, 'verifikasiSim'])->name('verifikasi-sim');
+    Route::post('/profil/verifikasi-sim', [ProfilController::class, 'simpanVerifikasiSim'])->middleware('throttle:5,1')->name('profil.verifikasi-sim');
     Route::post('/profil/kartu-disabilitas', [ProfilController::class, 'simpanKartu'])->name('profil.kartu');
     Route::delete('/profil/kartu-disabilitas', [ProfilController::class, 'hapusKartu'])->name('profil.kartu.hapus');
 });

@@ -167,6 +167,8 @@
 
                     @if ($syarat['aksi'] === 'profil')
                         <a href="{{ route('profil') }}" class="{{ $tombolKecil }} text-center">Buka profil</a>
+                    @elseif ($syarat['aksi'] === 'sim')
+                        <a href="{{ route('verifikasi-sim', ['lokasi' => $lokasi->id, 'tipe' => $tipe]) }}" class="{{ $tombolKecil }} text-center">Verifikasi Wanita</a>
                     @elseif ($syarat['aksi'] === 'kartu')
                         {{-- Simpan kartu langsung dari sini; setelah itu kembali ke denah yang sama. --}}
                         <form method="POST" action="{{ route('profil.kartu') }}" class="w-full sm:w-auto">

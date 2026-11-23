@@ -232,29 +232,29 @@ class SlotController extends Controller
         };
     }
 
-    /** Woman Parking: khusus pengguna perempuan (jenis_kelamin di profil). */
+    /** Woman Parking: SIM terverifikasi (kamera) dan jenis kelamin dari SIM = perempuan. */
     private function syaratWanita(?User $user): array
     {
-        if ($user?->perempuan()) {
-            return ['terpenuhi' => true, 'banner' => '✓ Terverifikasi sebagai pengguna Woman Parking', 'aksi' => null, 'tombol' => null, 'error' => null];
-        }
-
-        if ($user?->jenis_kelamin === User::JK_LAKI) {
+        if (! $user?->simTerverifikasi()) {
             return [
                 'terpenuhi' => false,
-                'banner'    => 'Woman Parking khusus pengguna wanita',
-                'aksi'      => null,
-                'tombol'    => 'Khusus pengguna wanita',
-                'error'     => 'Woman Parking khusus pengguna wanita.',
+                'banner'    => 'Verifikasi Wanita untuk memesan Woman Parking',
+                'aksi'      => 'sim',
+                'tombol'    => 'Perlu verifikasi wanita',
+                'error'     => 'Verifikasi Wanita terlebih dahulu untuk memesan Woman Parking.',
             ];
+        }
+
+        if ($user->perempuan()) {
+            return ['terpenuhi' => true, 'banner' => '✓ Terverifikasi sebagai pengguna Woman Parking', 'aksi' => null, 'tombol' => null, 'error' => null];
         }
 
         return [
             'terpenuhi' => false,
-            'banner'    => 'Lengkapi jenis kelamin di profil untuk memesan Woman Parking',
-            'aksi'      => 'profil',
-            'tombol'    => 'Lengkapi jenis kelamin di profil',
-            'error'     => 'Lengkapi jenis kelamin di profil untuk memesan Woman Parking.',
+            'banner'    => 'Woman Parking khusus pengguna wanita',
+            'aksi'      => null,
+            'tombol'    => 'Khusus pengguna wanita',
+            'error'     => 'Woman Parking khusus pengguna wanita.',
         ];
     }
 

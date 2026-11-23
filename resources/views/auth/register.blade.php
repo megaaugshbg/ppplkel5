@@ -47,6 +47,7 @@
                 @endforeach
             </div>
             @error('jenis_kelamin') <p id="err-jk" class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+            <p class="mt-1 text-xs text-slate-500">Untuk Woman Parking, lakukan Verifikasi Wanita di Profil.</p>
         </fieldset>
 
         <div>
