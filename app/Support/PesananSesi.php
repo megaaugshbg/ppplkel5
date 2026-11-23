@@ -7,6 +7,7 @@ use App\Models\SlotParkir;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 use RuntimeException;
 
 /**
@@ -24,6 +25,9 @@ class PesananSesi
 {
     /** Kunci session versi lama. Tidak dibaca lagi; dihapus diam-diam bila masih ada. */
     public const KUNCI = 'pesanan_terakhir';
+
+    /** Penanda di session: pesanan pengguna ini baru saja dibatalkan karena lewat batas bayar. */
+    public const KUNCI_BATAS_HABIS = 'batas_bayar_habis';
 
     // Label status (nilai 'status' di array pesanan)
     public const TERPESAN = 'Terpesan';
@@ -73,8 +77,48 @@ class PesananSesi
     /** Dipakai saat halaman dibuka tanpa pesanan aktif. */
     public static function arahkanKeBeranda(): RedirectResponse
     {
-        return redirect()->route('home')
-            ->with('pesan', 'Belum ada pesanan aktif. Silakan pesan slot parkir terlebih dahulu.');
+        $pesan = session(self::KUNCI_BATAS_HABIS)
+            ? session('pesan')
+            : 'Belum ada pesanan aktif. Silakan pesan slot parkir terlebih dahulu.';
+
+        return redirect()->route('home')->with('pesan', $pesan);
+    }
+
+    /**
+     * Batalkan semua pesanan yang belum dibayar dan sudah lewat batas waktu bayar
+     * (Booking::BATAS_BAYAR_MENIT), lalu kembalikan slotnya jadi tersedia.
+     * Dipanggil di setiap request lewat middleware BatalkanPesananLewatBatas.
+     */
+    public static function batalkanLewatBatasBayar(): void
+    {
+        if (! Booking::lewatBatasBayar()->exists()) {
+            return;
+        }
+
+        $userId = Auth::id();
+
+        $kodeMilikku = DB::transaction(function () use ($userId) {
+            $kodeMilikku = null;
+
+            foreach (Booking::lewatBatasBayar()->lockForUpdate()->get() as $booking) {
+                $booking->update(['status' => Booking::DIBATALKAN]);
+                SlotParkir::whereKey($booking->slot_parkir_id)
+                    ->where('status', SlotParkir::STATUS_TERPESAN)
+                    ->update(['status' => SlotParkir::STATUS_TERSEDIA]);
+
+                if ($userId && (int) $booking->user_id === (int) $userId) {
+                    $kodeMilikku = $booking->kode;
+                }
+            }
+
+            return $kodeMilikku;
+        });
+
+        if ($kodeMilikku) {
+            session()->flash(self::KUNCI_BATAS_HABIS, true);
+            session()->flash('pesan', "Waktu pembayaran pesanan {$kodeMilikku} sudah habis ("
+                . Booking::BATAS_BAYAR_MENIT . ' menit), jadi pesanan dibatalkan otomatis. Silakan pesan ulang.');
+        }
     }
 
     /**
@@ -84,7 +128,7 @@ class PesananSesi
      */
     public static function simpan(array $pesanan): void
     {
-        $userId = auth()->id();
+        $userId = Auth::id();
 
         DB::transaction(function () use ($pesanan, $userId) {
             $booking = Booking::milik((int) $userId)->aktif()
@@ -138,7 +182,7 @@ class PesananSesi
      */
     public static function kosongkan(): ?string
     {
-        $userId = auth()->id();
+        $userId = Auth::id();
         if (! $userId) {
             return null;
         }
@@ -161,7 +205,7 @@ class PesananSesi
     /** Booking selesai (sudah check-out) terbaru milik pengguna, sebagai array struk. */
     public static function strukTerakhir(): ?array
     {
-        $userId = auth()->id();
+        $userId = Auth::id();
         if (! $userId) {
             return null;
         }
@@ -195,6 +239,13 @@ class PesananSesi
         }
         $pesanan['status'] = Booking::LABEL[$booking->status] ?? $booking->status;
 
+        // Batas bayar, hanya untuk pesanan yang belum dibayar
+        if ($booking->status === Booking::TERPESAN && $booking->created_at) {
+            $batas = $booking->batasBayar();
+            $pesanan['batas_bayar'] = $batas->copy()->setTimezone(self::ZONA_WAKTU)->format('H:i');
+            $pesanan['sisa_detik'] = max(0, (int) now()->diffInSeconds($batas, false));
+        }
+
         return $pesanan;
     }
 
@@ -222,7 +273,7 @@ class PesananSesi
 
     private static function bookingAktif(): ?Booking
     {
-        $userId = auth()->id();
+        $userId = Auth::id();
         if (! $userId) {
             return null;
         }

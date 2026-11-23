@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 use RuntimeException;
 
 /**
@@ -21,6 +22,9 @@ class Booking extends Model
     public const SUDAH_CHECKIN = 'sudah_checkin';
     public const SELESAI       = 'selesai';
     public const DIBATALKAN    = 'dibatalkan';
+
+    // Batas waktu bayar sejak pesanan dibuat (menit). Lewat dari ini, pesanan dibatalkan otomatis.
+    public const BATAS_BAYAR_MENIT = 5;
 
     /** Status pesanan yang masih berjalan (maks. satu per pengguna). */
     public const AKTIF = [self::TERPESAN, self::SUDAH_DIBAYAR, self::SUDAH_CHECKIN];
@@ -79,6 +83,19 @@ class Booking extends Model
     public function scopeAktif(Builder $query): Builder
     {
         return $query->whereIn('status', self::AKTIF);
+    }
+
+    /** Pesanan belum dibayar yang sudah lewat batas waktu bayar. */
+    public function scopeLewatBatasBayar(Builder $query): Builder
+    {
+        return $query->where('status', self::TERPESAN)
+            ->where('created_at', '<=', now()->subMinutes(self::BATAS_BAYAR_MENIT));
+    }
+
+    /** Waktu terakhir pesanan ini boleh dibayar (UTC). */
+    public function batasBayar(): Carbon
+    {
+        return $this->created_at->copy()->addMinutes(self::BATAS_BAYAR_MENIT);
     }
 
     public function scopeMilik(Builder $query, int $userId): Builder

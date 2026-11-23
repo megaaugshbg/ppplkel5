@@ -16,6 +16,20 @@
         <p class="text-sm text-slate-500">Cek rincian tagihan, lalu bayar sebelum check in.</p>
     </div>
 
+    {{-- Batas waktu bayar --}}
+    @isset($pesanan['sisa_detik'])
+        <div id="kotak-batas" role="timer" aria-live="polite"
+             class="flex items-center justify-between gap-4 rounded-2xl border border-primary bg-primary-soft px-4 py-3">
+            <div>
+                <p id="teks-batas" class="text-sm font-semibold text-primary">Selesaikan pembayaran dalam</p>
+                <p class="text-xs text-slate-600">Bayar sebelum pukul {{ $pesanan['batas_bayar'] }} WIB, lewat dari itu pesanan dibatalkan otomatis.</p>
+            </div>
+            <strong id="hitung-mundur" class="shrink-0 font-mono text-2xl tabular-nums text-primary">
+                {{ sprintf('%02d:%02d', intdiv($pesanan['sisa_detik'], 60), $pesanan['sisa_detik'] % 60) }}
+            </strong>
+        </div>
+    @endisset
+
     @if (session('error') || $errors->any())
         <div role="alert" class="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800">
             {{ session('error') ?? $errors->first() }}
@@ -107,5 +121,41 @@
             document.getElementById('teks-total').textContent = rupiah(tarif * r.value);
         });
     });
+
+    // Hitung mundur batas bayar. Saat habis, tombol bayar dimatikan lalu halaman
+    // dimuat ulang; server yang membatalkan pesanan dan mengarahkan ke beranda.
+    let sisa = {{ (int) ($pesanan['sisa_detik'] ?? -1) }};
+    const elWaktu = document.getElementById('hitung-mundur');
+
+    if (elWaktu && sisa >= 0) {
+        const tampilkan = () => {
+            const m = String(Math.floor(sisa / 60)).padStart(2, '0');
+            const d = String(sisa % 60).padStart(2, '0');
+            elWaktu.textContent = `${m}:${d}`;
+            if (sisa <= 60) elWaktu.classList.add('text-red-600');
+        };
+
+        const habis = () => {
+            const tombol = document.getElementById('tombol-bayar');
+            tombol.disabled = true;
+            tombol.classList.add('opacity-50', 'cursor-not-allowed');
+            document.getElementById('teks-batas').textContent = 'Waktu pembayaran habis';
+            setTimeout(() => window.location.reload(), 1500);
+        };
+
+        tampilkan();
+        if (sisa === 0) {
+            habis();
+        } else {
+            const timer = setInterval(() => {
+                sisa--;
+                tampilkan();
+                if (sisa <= 0) {
+                    clearInterval(timer);
+                    habis();
+                }
+            }, 1000);
+        }
+    }
 </script>
 @endpush
