@@ -7,8 +7,7 @@
 
 @php
     $jarak = $mal['jarak'];
-    $teksJarak = $jarak === null ? null
-        : ($jarak < 1 ? number_format($jarak * 1000, 0, ',', '.') . ' m' : number_format($jarak, 1, ',', '.') . ' km');
+    $teksJarak = $jarak === null ? null : number_format($jarak, 1, ',', '.') . ' km';
 @endphp
 
 {{-- Mal yang tutup tetap bisa dibuka (lihat tipe & denah), tapi tidak bisa dipesan. --}}
@@ -24,12 +23,6 @@
             <span class="absolute left-3 top-3 rounded-full bg-primary px-2.5 py-1 text-xs font-semibold text-on-primary">Tutup</span>
         @endunless
 
-        @if ($teksJarak)
-            <span class="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-surface/90 px-2.5 py-1 text-xs font-semibold text-primary">
-                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 11 18-8-8 18-2-8-8-2Z"/></svg>
-                {{ $teksJarak }}
-            </span>
-        @endif
     </div>
 
     <div class="flex flex-1 flex-col gap-1.5 p-4">
@@ -52,6 +45,13 @@
                 <span class="text-slate-500">Slot penuh</span>
             @endif
         </p>
+
+        @if ($teksJarak)
+            <p class="inline-flex items-center gap-1 text-xs font-semibold text-primary">
+                <svg class="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 11 18-8-8 18-2-8-8-2Z"/></svg>
+                {{ $teksJarak }} dari lokasimu
+            </p>
+        @endif
 
         @if ($mal['tipeKosong'])
             <ul class="mt-auto flex flex-wrap gap-1.5 pt-2" aria-label="Tipe slot tersedia">

@@ -48,7 +48,8 @@ class HomeController extends Controller
         $kota = $this->kotaAktif($daftarKota);
         $posisi = session('beranda.posisi'); // [lat, lng] atau null
         $tipe = in_array($request->query('tipe'), SlotParkir::SEMUA_TIPE, true) ? $request->query('tipe') : null;
-        $urut = $posisi && $request->query('urut') === 'jarak' ? 'jarak' : null;
+        // Bila posisi diketahui, daftar otomatis urut terdekat. ?urut=nama mematikannya (urut abjad).
+        $urut = $request->query('urut') === 'nama' ? 'nama' : ($posisi ? 'jarak' : null);
         $q = mb_substr(trim((string) $request->query('q', '')), 0, 100);
 
         $mal = $kota ? $this->daftarMal($kota, $tipe, $q, $posisi, $urut) : collect();

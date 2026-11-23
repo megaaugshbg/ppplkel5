@@ -88,9 +88,11 @@
         function tulis(v) { try { sessionStorage.setItem(KUNCI, v); } catch (e) {} }
         function info(teks) { if (status) status.textContent = teks; }
 
-        function minta(ulang) {
+        // ulang: tombol "Gunakan lokasi saya" (kota ikut GPS). urutJarak: chip "Terdekat" (urut jarak).
+        function minta(ulang, urutJarak) {
+            var tampil = ulang || urutJarak;
             if (!('geolocation' in navigator)) { info('Browser tidak mendukung lokasi.'); return; }
-            if (ulang) info('Mencari lokasimu…');
+            if (tampil) info('Mencari lokasimu…');
             navigator.geolocation.getCurrentPosition(function (p) {
                 tulis('diizinkan');
                 var u = new URL(@json(route('home')), window.location.origin);
@@ -98,10 +100,15 @@
                 u.searchParams.set('lat', p.coords.latitude.toFixed(5));
                 u.searchParams.set('lng', p.coords.longitude.toFixed(5));
                 if (ulang) u.searchParams.set('gps_ulang', '1');
+                if (urutJarak) u.searchParams.set('urut', 'jarak');
                 window.location.assign(u.toString());
-            }, function () {
+            }, function (err) {
                 tulis('ditolak');
-                if (ulang) info('Izin lokasi ditolak. Aktifkan di pengaturan browser untuk melihat jarak.');
+                if (tampil) {
+                    info(err && err.code === 1
+                        ? 'Izin lokasi ditolak. Aktifkan di pengaturan browser untuk melihat jarak.'
+                        : 'Lokasimu belum bisa dibaca. Coba lagi beberapa saat.');
+                }
             }, { timeout: 10000, maximumAge: 600000 });
         }
 
@@ -109,6 +116,10 @@
             tulis('diminta'); // ditandai sebelum bertanya, supaya tidak bertanya lagi di sesi ini
             minta(false);
         }
+
+        document.querySelectorAll('[data-terdekat]').forEach(function (b) {
+            b.addEventListener('click', function () { minta(false, true); });
+        });
 
         document.querySelectorAll('[data-gps-ulang]').forEach(function (b) {
             b.addEventListener('click', function () {

@@ -1,6 +1,7 @@
 {{--
     Chip filter beranda: Semua / Normal / Woman / Priority / EV Charging (?tipe=),
-    lalu Terdekat (?urut=jarak) yang hanya aktif bila posisi GPS tersedia.
+    lalu Terdekat: bila posisi GPS sudah ada, daftar otomatis urut jarak dan chip ini
+    menjadi saklar (?urut=nama untuk urut abjad). Bila posisi belum ada, chip meminta izin lokasi.
     Pencarian (?q=) dipertahankan saat chip diklik.
 --}}
 @props(['tipe' => null, 'urut' => null, 'q' => '', 'adaPosisi' => false, 'labelTipe' => []])
@@ -32,16 +33,16 @@
 
     @if ($adaPosisi)
         @php $on = $urut === 'jarak'; @endphp
-        <a href="{{ $url(['urut' => $on ? null : 'jarak']) }}" aria-pressed="{{ $on ? 'true' : 'false' }}"
+        <a href="{{ $url(['urut' => $on ? 'nama' : 'jarak']) }}" aria-pressed="{{ $on ? 'true' : 'false' }}"
            class="{{ $dasar }} {{ $on ? $aktif : $biasa }}">
             <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 11 18-8-8 18-2-8-8-2Z"/></svg>
             Terdekat
         </a>
     @else
-        <span aria-disabled="true" title="Izinkan akses lokasi untuk memakai filter ini"
-              class="{{ $dasar }} cursor-not-allowed border-line bg-surface text-slate-400">
+        <button type="button" data-terdekat title="Izinkan akses lokasi untuk mengurutkan dari yang terdekat"
+                class="{{ $dasar }} {{ $biasa }}">
             <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 11 18-8-8 18-2-8-8-2Z"/></svg>
             Terdekat
-        </span>
+        </button>
     @endif
 </nav>
