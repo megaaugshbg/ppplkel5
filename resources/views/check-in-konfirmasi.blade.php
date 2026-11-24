@@ -14,6 +14,11 @@
         <p class="text-sm text-slate-500">Silakan parkir di slot <strong class="text-primary">{{ $pesanan['slot'] }}</strong></p>
     </div>
 
+    {{-- Batas waktu parkir --}}
+    <div class="mb-4">
+        <x-batas-waktu :pesanan="$pesanan" />
+    </div>
+
     {{-- QR Code untuk check-out --}}
     <div class="mb-4 rounded-2xl border border-line bg-surface p-4 text-center">
         <x-qr-booking :kode="$pesanan['kode']" />

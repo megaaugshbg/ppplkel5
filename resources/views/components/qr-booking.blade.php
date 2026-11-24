@@ -1,15 +1,14 @@
-{{-- Komponen QR Code booking (SVG, tanpa butuh ekstensi imagick). --}}
+{{-- Komponen QR Code booking (SVG). --}}
 @props(['kode', 'ukuran' => 'h-48 w-48'])
 
 @php
-    $svg = \SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')
+    $svg = (string) \SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')
         ->size(300)
         ->margin(0)
         ->errorCorrection('M')
         ->generate($kode);
 
-    // buang deklarasi <?xml ...?> supaya aman di-inline di HTML
-    $svg = preg_replace('/^<\?xml.*?\?>\s*/s', '', (string) $svg);
+    $svg = substr($svg, (int) strpos($svg, '<svg'));
 @endphp
 
 <figure class="mx-auto w-fit text-center">
