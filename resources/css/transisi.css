@@ -8,7 +8,7 @@
 @view-transition { navigation: auto; }
 
 /* Navbar atas dan navigasi bawah tetap diam saat halaman berganti. */
-header.sticky { view-transition-name: navbar-atas; }
+header[data-navbar] { view-transition-name: navbar-atas; } /* sticky di halaman lain, fixed di beranda */
 nav.fixed     { view-transition-name: navbar-bawah; }
 
 ::view-transition-old(root) {

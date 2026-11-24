@@ -13,7 +13,12 @@
 </head>
 <body class="min-h-screen bg-page font-sans text-primary antialiased">
 
-    <x-navbar />
+    {{-- Navbar transparan di atas hero hanya untuk halaman yang memintanya: @section('navbar-transparan', '1'). --}}
+    @hasSection('navbar-transparan')
+        <x-navbar :transparan="true" />
+    @else
+        <x-navbar />
+    @endif
 
     <div class="pb-24 md:pb-10">
         @yield('content')
