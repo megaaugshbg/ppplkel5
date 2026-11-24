@@ -14,6 +14,12 @@
         <p class="text-sm text-slate-500">Silakan parkir di slot <strong class="text-primary">{{ $pesanan['slot'] }}</strong></p>
     </div>
 
+    {{-- QR Code untuk check-out --}}
+    <div class="mb-4 rounded-2xl border border-line bg-surface p-4 text-center">
+        <x-qr-booking :kode="$pesanan['kode']" />
+        <p class="mt-2 text-xs text-slate-500">Simpan QR ini, dipakai untuk check-out saat keluar.</p>
+    </div>
+
     <dl class="divide-y divide-line rounded-2xl border border-line bg-surface text-sm">
         <div class="flex justify-between gap-4 p-3">
             <dt class="text-slate-500">Kode pesanan</dt>
