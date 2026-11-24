@@ -1,6 +1,6 @@
 {{--
     Navbar Penyewa, selebar layar.
-    Desktop : logo | kotak cari | Home / Riwayat / Pengaturan | nama akun + Keluar
+    Desktop : logo | kotak cari | HOME / RIWAYAT / PROFIL (huruf kapital lewat CSS) | nama akun + Keluar
     HP      : logo + ikon Keluar, kotak cari di baris kedua (menu pindah ke <x-nav-bawah>)
     Kotak cari mencari mal di beranda (GET /home?q=...), kota mengikuti pilihan di session.
 
@@ -15,7 +15,7 @@
     $menu = [
         ['label' => 'Home',       'url' => route('home'), 'aktif' => request()->routeIs('home')],
         ['label' => 'Riwayat',    'url' => route('riwayat'), 'aktif' => request()->routeIs('riwayat', 'riwayat.*')],
-        ['label' => 'Pengaturan', 'url' => route('profil'), 'aktif' => request()->routeIs('profil')],
+        ['label' => 'Profil',     'url' => route('profil'), 'aktif' => request()->routeIs('profil')],
     ];
 
     // Saat transparan (di atas foto hero): teks, ikon, dan cincin fokus berwarna cream.
@@ -72,12 +72,14 @@
         </form>
 
         {{-- Menu (desktop) --}}
-        <nav aria-label="Menu utama" class="hidden items-center gap-6 text-sm font-medium md:flex">
+        {{-- Huruf kapital lewat CSS (uppercase); teks asli tetap "Home" dsb. untuk pembaca layar.
+             Semua menu berwarna primary (cream saat transparan); menu aktif diberi garis bawah. --}}
+        <nav aria-label="Menu utama" class="hidden items-center gap-6 text-sm font-bold uppercase tracking-wide md:flex">
             @foreach ($menu as $m)
                 <a href="{{ $m['url'] }}" @if ($m['aktif']) aria-current="page" @endif
-                   class="rounded-sm {{ $fokus }} {{ $m['aktif']
-                       ? 'border-b-2 border-primary pb-0.5 text-primary group-data-[solid=false]/nav:border-on-primary group-data-[solid=false]/nav:text-on-primary'
-                       : 'text-slate-500 hover:text-primary group-data-[solid=false]/nav:text-on-primary/85 group-data-[solid=false]/nav:hover:text-on-primary' }}">{{ $m['label'] }}</a>
+                   class="rounded-sm border-b-2 pb-0.5 text-primary group-data-[solid=false]/nav:text-on-primary {{ $fokus }} {{ $m['aktif']
+                       ? 'border-primary group-data-[solid=false]/nav:border-on-primary'
+                       : 'border-transparent hover:border-primary/30 group-data-[solid=false]/nav:hover:border-on-primary/50' }}">{{ $m['label'] }}</a>
             @endforeach
         </nav>
 

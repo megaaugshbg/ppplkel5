@@ -6,30 +6,45 @@
 
 @section('content')
     {{-- ============================== HERO ============================== --}}
+    @php
+        // Foto latar mengikuti kota aktif: public/images/kota/{slug}.jpg (mis. surabaya.jpg).
+        // Tidak ada filenya / kota kosong -> foto cadangan CITO.jpg.
+        $fotoHero = 'images/mal/CITO.jpg';
+        if ($kota) {
+            $calon = 'images/kota/' . \Illuminate\Support\Str::slug($kota) . '.jpg';
+            if (is_file(public_path($calon))) {
+                $fotoHero = $calon;
+            }
+        }
+    @endphp
     <section aria-labelledby="sapaan">
-        {{-- Foto latar selebar layar. Latar primary = cadangan bila foto gagal dimuat. --}}
+        {{-- Foto latar selebar layar, tinggi wadah tetap (tanpa layout shift).
+             Latar primary = cadangan bila foto gagal dimuat. --}}
         <div class="relative isolate h-[360px] overflow-hidden bg-primary md:h-[500px]">
-            <img src="{{ asset('images/mal/CITO.jpg') }}" alt="" width="1500" height="938"
-                 loading="eager" fetchpriority="high" decoding="async"
-                 class="absolute inset-0 -z-10 h-full w-full object-cover">
-            {{-- Lapisan warna primary agar teks cream terbaca (kontras diukur pada foto ini:
-                 judul >= 3:1, sub-teks & menu >= 4.5:1). Ganti foto = ukur ulang kontrasnya. --}}
+            {{-- Muncul halus (±400ms) setelah foto selesai dimuat; reduced-motion diatur global di transisi.css. --}}
+            <img src="{{ asset($fotoHero) }}" alt=""
+                 loading="eager" fetchpriority="high" decoding="async" data-foto-hero
+                 onload="this.dataset.termuat = ''"
+                 class="absolute inset-0 -z-10 h-full w-full object-cover opacity-0 transition-opacity duration-400 ease-out data-termuat:opacity-100">
+            <noscript><style>[data-foto-hero] { opacity: 1 !important; }</style></noscript>
+            {{-- Lapisan warna primary agar teks cream terbaca di foto kota mana pun.
+                 Kontras diukur (WCAG, piksel latar terang persentil 95) pada CITO.jpg dan
+                 semua foto di images/kota: judul >= 4.2:1, sub-teks >= 4.7:1, menu >= 6.7:1.
+                 Foto baru/diganti = ukur ulang kontrasnya. --}}
             <div aria-hidden="true">
-                {{-- 1. Rata: lebih pekat di HP karena teks menutupi bagian foto yang terang. --}}
-                <div class="absolute inset-0 bg-primary/50 md:bg-primary/35"></div>
-                {{-- 2. Sorotan gelap lembut di belakang sapaan. --}}
-                <div class="absolute inset-0 bg-[radial-gradient(ellipse_45%_35%_at_50%_45%,var(--color-primary),transparent)] opacity-40"></div>
-                {{-- 3. Gradasi tipis di atas: kontras menu navbar transparan. --}}
-                <div class="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-primary/55 to-transparent"></div>
-                {{-- 4. Separuh bawah makin pekat (total ±55-65%) menuju kartu pencarian. --}}
-                <div class="absolute inset-0 bg-gradient-to-b from-transparent from-50% to-primary/30"></div>
+                {{-- 1. Rata di seluruh hero. --}}
+                <div class="absolute inset-0 bg-primary/55"></div>
+                {{-- 2. Gradasi tipis di atas: kontras menu navbar transparan. --}}
+                <div class="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-primary/45 to-transparent"></div>
+                {{-- 3. Makin pekat dari 40% tinggi ke bawah, menuju kartu pencarian. --}}
+                <div class="absolute inset-0 bg-gradient-to-b from-transparent from-40% to-primary/40"></div>
             </div>
 
             <div class="relative flex h-full flex-col items-center justify-center px-4 pb-24 pt-16 text-center md:pb-32 md:pt-20">
                 <h1 id="sapaan" class="text-4xl font-bold tracking-tight text-on-primary drop-shadow-md md:text-6xl">
                     Hey, {{ \Illuminate\Support\Str::of(auth()->user()->name)->before(' ') }}
                 </h1>
-                <p class="mt-3 text-base font-medium text-on-primary/90 drop-shadow md:text-xl">Mau parkir di mana hari ini?</p>
+                <p class="mt-3 text-base font-medium text-on-primary drop-shadow md:text-xl">Mau parkir di mana hari ini?</p>
             </div>
         </div>
 
@@ -112,18 +127,22 @@
                 </div>
             @else
                 {{-- Carousel di semua ukuran layar (resources/js/carousel.js). Track selebar layar
-                     supaya kartu terakhir tampak terpotong di kanan sebagai petunjuk bisa digeser. --}}
+                     supaya kartu terakhir tampak terpotong di kanan sebagai petunjuk bisa digeser.
+                     Bila kartu cukup banyak, JS menggandakan daftar (klon aria-hidden) sehingga
+                     carousel berputar tanpa ujung. --}}
                 <div class="relative" data-carousel>
                     <ul data-carousel-track tabindex="0" aria-label="Daftar mal"
                         class="-mx-4 flex snap-x snap-mandatory scroll-px-4 gap-4 overflow-x-auto px-4 pb-4 pt-1 outline-none [scrollbar-width:none] focus-visible:ring-2 focus-visible:ring-focus/40 md:-mx-8 md:scroll-px-8 md:px-8 lg:-mx-12 lg:scroll-px-12 lg:px-12 [&::-webkit-scrollbar]:hidden">
                         @foreach ($mal as $m)
-                            <li class="flex w-[16.5rem] shrink-0 snap-start md:w-[18rem] lg:w-[19rem]">
+                            {{-- *:!w-full: kartu mengikuti lebar <li> (kartu sendiri mengunci 16.5rem di HP). --}}
+                            <li style="--urutan: {{ min($loop->index, 4) }}" class="flex w-[20rem] max-w-[calc(100vw-3rem)] shrink-0 snap-start *:!w-full md:w-[22rem] lg:w-[24rem]">
                                 <x-beranda.kartu-mal :mal="$m" :label-tipe="$labelTipe" :tipe="$tipe" />
                             </li>
                         @endforeach
                     </ul>
 
-                    {{-- Panah (desktop). Disembunyikan otomatis di ujung carousel. --}}
+                    {{-- Panah (desktop). Mode berputar: selalu tampil & aktif. Tanpa putaran
+                         (kartu sedikit): disembunyikan di ujung carousel. --}}
                     @php
                         $panah = 'absolute top-1/2 z-10 hidden h-11 w-11 -translate-y-1/2 place-items-center rounded-full bg-surface text-primary shadow-lg ring-1 ring-line hover:bg-surface-alt focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-0 md:grid';
                     @endphp

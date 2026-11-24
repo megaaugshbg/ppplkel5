@@ -39,12 +39,15 @@
         {{-- Kartu booking yang sedang parkir --}}
         <section class="flex items-center gap-4 rounded-2xl border border-line bg-surface p-4">
             <span class="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-primary text-lg font-bold text-on-primary">{{ $pesanan['slot'] }}</span>
+            {{-- Label status sebaris dengan kode, supaya nama lokasi mendapat lebar penuh di HP. --}}
             <div class="min-w-0 flex-1">
-                <p class="text-xs text-slate-500">{{ $pesanan['kode'] }}</p>
+                <div class="flex items-center justify-between gap-2">
+                    <p class="text-xs text-slate-500">{{ $pesanan['kode'] }}</p>
+                    <span class="shrink-0 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">Sedang parkir</span>
+                </div>
                 <p class="truncate text-base font-semibold">{{ $pesanan['lokasi'] }}</p>
                 <p class="text-xs text-slate-500">{{ $pesanan['tipe'] }} &middot; masuk {{ $pesanan['waktu_checkin'] ?? '-' }} WIB</p>
             </div>
-            <span class="shrink-0 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">Sedang parkir</span>
         </section>
 
         <x-rincian-pesanan :pesanan="$pesanan">
