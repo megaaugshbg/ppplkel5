@@ -13,6 +13,15 @@ export function pasangNavbarTransparan() {
 
     let menunggu = false;
 
+    // Menu desktop digeser ke tengah navbar saat transparan. Jarak geser dihitung dari posisi
+    // alaminya (offsetLeft tidak terpengaruh transform) ke titik tengah lebar navbar.
+    const menu = header.querySelector('[data-menu-utama]');
+    const ukurGeser = () => {
+        if (!menu || menu.offsetParent === null) return; // tersembunyi di HP
+        const geser = header.clientWidth / 2 - (menu.offsetLeft + menu.offsetWidth / 2);
+        header.style.setProperty('--geser', Math.round(geser) + 'px');
+    };
+
     // Hanya fokus keyboard (bukan klik mouse) yang membuat navbar solid.
     const fokusKeyboard = () => {
         try {
@@ -39,6 +48,9 @@ export function pasangNavbarTransparan() {
     header.addEventListener('focusin', jadwalkan);
     header.addEventListener('focusout', () => setTimeout(jadwalkan, 0));
     window.addEventListener('pageshow', jadwalkan); // kembali lewat tombol Back (bfcache)
+    window.addEventListener('resize', ukurGeser, { passive: true });
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(ukurGeser); // lebar teks berubah setelah font termuat
 
+    ukurGeser();
     perbarui();
 }
