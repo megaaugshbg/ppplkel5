@@ -44,10 +44,14 @@ html { scroll-behavior: smooth; }
 @keyframes muncul-naik { from { opacity: 0; translate: 0 14px; } }
 ul[aria-label="Daftar mal"] > li,
 ul.grid > li { animation: 420ms cubic-bezier(.22, .61, .36, 1) both muncul-naik; }
-ul[aria-label="Daftar mal"] > li:nth-child(2), ul.grid > li:nth-child(2) { animation-delay: 60ms; }
-ul[aria-label="Daftar mal"] > li:nth-child(3), ul.grid > li:nth-child(3) { animation-delay: 120ms; }
-ul[aria-label="Daftar mal"] > li:nth-child(4), ul.grid > li:nth-child(4) { animation-delay: 180ms; }
-ul[aria-label="Daftar mal"] > li:nth-child(n+5), ul.grid > li:nth-child(n+5) { animation-delay: 240ms; }
+ul.grid > li:nth-child(2) { animation-delay: 60ms; }
+ul.grid > li:nth-child(3) { animation-delay: 120ms; }
+ul.grid > li:nth-child(4) { animation-delay: 180ms; }
+ul.grid > li:nth-child(n+5) { animation-delay: 240ms; }
+/* Carousel mal: urutan dari atribut style --urutan (0-4) di home.blade.php, bukan nth-child,
+   karena klon carousel disisipkan di depan daftar. Klon ([data-klon]) tidak dianimasikan. */
+ul[aria-label="Daftar mal"] > li { animation-delay: calc(var(--urutan, 0) * 60ms); }
+ul[aria-label="Daftar mal"] > li[data-klon] { animation: none; }
 
 /* 5) Logo di halaman login: muncul perlahan. */
 .logo-masuk { animation: 600ms cubic-bezier(.22, .61, .36, 1) 100ms both muncul-naik; }
