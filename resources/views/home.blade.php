@@ -2,30 +2,87 @@
 
 @section('title', 'Beranda - Markir.In')
 
+@section('navbar-transparan', '1')
+
 @section('content')
-    <div class="mx-auto max-w-6xl space-y-6 px-4 pt-5 md:space-y-8 md:px-6 md:pt-8">
+    {{-- ============================== HERO ============================== --}}
+    <section aria-labelledby="sapaan">
+        {{-- Foto latar selebar layar. Latar primary = cadangan bila foto gagal dimuat. --}}
+        <div class="relative isolate h-[360px] overflow-hidden bg-primary md:h-[500px]">
+            <img src="{{ asset('images/mal/CITO.jpg') }}" alt="" width="1500" height="938"
+                 loading="eager" fetchpriority="high" decoding="async"
+                 class="absolute inset-0 -z-10 h-full w-full object-cover">
+            {{-- Lapisan warna primary agar teks cream terbaca (kontras diukur pada foto ini:
+                 judul >= 3:1, sub-teks & menu >= 4.5:1). Ganti foto = ukur ulang kontrasnya. --}}
+            <div aria-hidden="true">
+                {{-- 1. Rata: lebih pekat di HP karena teks menutupi bagian foto yang terang. --}}
+                <div class="absolute inset-0 bg-primary/50 md:bg-primary/35"></div>
+                {{-- 2. Sorotan gelap lembut di belakang sapaan. --}}
+                <div class="absolute inset-0 bg-[radial-gradient(ellipse_45%_35%_at_50%_45%,var(--color-primary),transparent)] opacity-40"></div>
+                {{-- 3. Gradasi tipis di atas: kontras menu navbar transparan. --}}
+                <div class="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-primary/55 to-transparent"></div>
+                {{-- 4. Separuh bawah makin pekat (total ±55-65%) menuju kartu pencarian. --}}
+                <div class="absolute inset-0 bg-gradient-to-b from-transparent from-50% to-primary/30"></div>
+            </div>
 
-        @if (session('pesan'))
-            <div role="status" class="rounded-2xl border border-line bg-surface-alt px-5 py-3 text-sm font-medium">{{ session('pesan') }}</div>
-        @endif
+            <div class="relative flex h-full flex-col items-center justify-center px-4 pb-24 pt-16 text-center md:pb-32 md:pt-20">
+                <h1 id="sapaan" class="text-4xl font-bold tracking-tight text-on-primary drop-shadow-md md:text-6xl">
+                    Hey, {{ \Illuminate\Support\Str::of(auth()->user()->name)->before(' ') }}
+                </h1>
+                <p class="mt-3 text-base font-medium text-on-primary/90 drop-shadow md:text-xl">Mau parkir di mana hari ini?</p>
+            </div>
+        </div>
 
-        {{-- Sapaan + pemilih kota --}}
-        <div class="flex flex-wrap items-end justify-between gap-3">
-            <div>
-                <p class="text-sm text-slate-500">Halo, {{ \Illuminate\Support\Str::of(auth()->user()->name)->before(' ') }}! Mau parkir di mana?</p>
-                <div class="mt-1">
-                    <x-beranda.pemilih-kota :daftar-kota="$daftarKota" :kota="$kota" />
+        {{-- Kartu pencarian: menumpang di tepi bawah hero. --}}
+        <div class="relative z-20 -mt-20 px-4 md:-mt-24 md:px-8 lg:px-12">
+            <div class="mx-auto max-w-3xl rounded-3xl border border-line bg-surface p-4 shadow-xl shadow-[var(--color-shadow)] md:p-5">
+                <div class="flex flex-col gap-3 md:flex-row md:items-center">
+                    <div class="md:shrink-0 md:border-r md:border-line md:pr-4">
+                        <x-beranda.pemilih-kota :daftar-kota="$daftarKota" :kota="$kota" />
+                    </div>
+
+                    {{-- Sama dengan kotak cari di navbar: GET ke beranda, filter tipe/urut dipertahankan. --}}
+                    <form action="{{ route('home') }}" method="GET" role="search" class="flex flex-1 flex-col gap-3 sm:flex-row sm:items-center">
+                        @foreach (['tipe' => $tipe, 'urut' => $urut] as $kunci => $nilai)
+                            @if ($nilai)
+                                <input type="hidden" name="{{ $kunci }}" value="{{ $nilai }}">
+                            @endif
+                        @endforeach
+                        <label for="cari-mal-hero" class="sr-only">Cari mal atau lokasi parkir</label>
+                        <div class="flex flex-1 items-center gap-2 rounded-2xl border border-line bg-page px-4 focus-within:border-focus focus-within:ring-2 focus-within:ring-focus/20">
+                            <svg class="h-5 w-5 shrink-0 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+                            <input id="cari-mal-hero" type="search" name="q" maxlength="100" value="{{ $q }}"
+                                   placeholder="Cari mal atau lokasi parkir…"
+                                   class="w-full bg-transparent py-3 text-sm text-primary outline-none placeholder:text-slate-400">
+                        </div>
+                        <button type="submit"
+                                class="rounded-2xl bg-primary px-7 py-3 text-sm font-semibold text-on-primary hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus">
+                            Cari
+                        </button>
+                    </form>
+                </div>
+
+                <div class="mt-4 border-t border-line pt-4">
+                    <x-beranda.chip-filter :tipe="$tipe" :urut="$urut" :q="$q" :ada-posisi="$adaPosisi" :label-tipe="$labelTipe" />
+                    <p id="status-lokasi" role="status" aria-live="polite" class="mt-2 text-xs text-slate-500 empty:hidden"></p>
                 </div>
             </div>
-            <p id="status-lokasi" role="status" aria-live="polite" class="text-xs text-slate-500"></p>
         </div>
+    </section>
+
+    {{-- ============================== ISI ============================== --}}
+    <div class="space-y-6 px-4 pt-8 md:space-y-8 md:px-8 md:pt-10 lg:px-12">
+
+        @if (session('pesan'))
+            <div role="status" class="mx-auto max-w-3xl rounded-2xl border border-line bg-surface-alt px-5 py-3 text-sm font-medium">{{ session('pesan') }}</div>
+        @endif
 
         {{-- Mal di kota terpilih --}}
         <section aria-labelledby="judul-mal" class="space-y-4">
             <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-                <h1 id="judul-mal" class="text-xl font-bold md:text-2xl">
+                <h2 id="judul-mal" class="text-xl font-bold md:text-2xl">
                     {{ $kota ? 'Mal di ' . $kota : 'Mal' }}
-                </h1>
+                </h2>
                 @if ($q !== '')
                     <p class="text-sm text-slate-500">
                         Hasil untuk “<span class="font-semibold text-primary">{{ $q }}</span>”
@@ -36,15 +93,13 @@
                 @endif
             </div>
 
-            <x-beranda.chip-filter :tipe="$tipe" :urut="$urut" :q="$q" :ada-posisi="$adaPosisi" :label-tipe="$labelTipe" />
-
             @if (! $tabelSiap || ! $kota)
-                <div class="rounded-3xl border-2 border-dashed border-line bg-surface px-6 py-12 text-center">
+                <div class="max-w-3xl rounded-3xl border-2 border-dashed border-line bg-surface px-6 py-12 text-center">
                     <p class="text-base font-semibold">Data lahan parkir belum tersedia</p>
                     <p class="mt-1 text-sm text-slate-500">Silakan coba lagi nanti.</p>
                 </div>
             @elseif ($mal->isEmpty())
-                <div class="rounded-3xl border-2 border-dashed border-line bg-surface px-6 py-12 text-center">
+                <div class="max-w-3xl rounded-3xl border-2 border-dashed border-line bg-surface px-6 py-12 text-center">
                     <p class="text-base font-semibold">Tidak ada mal yang cocok</p>
                     <p class="mt-1 text-sm text-slate-500">
                         @if ($tipe)
@@ -56,18 +111,33 @@
                     <a href="{{ route('home') }}" class="mt-4 inline-block rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus">Tampilkan semua mal</a>
                 </div>
             @else
-                {{-- HP: geser horizontal. Desktop: grid 3-4 kolom. --}}
-                <ul class="-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2 [scrollbar-width:none] md:mx-0 md:grid md:grid-cols-3 md:overflow-visible md:px-0 lg:grid-cols-4" aria-label="Daftar mal">
-                    @foreach ($mal as $m)
-                        <li class="flex snap-start">
-                            <x-beranda.kartu-mal :mal="$m" :label-tipe="$labelTipe" :tipe="$tipe" />
-                        </li>
-                    @endforeach
-                </ul>
+                {{-- Carousel di semua ukuran layar (resources/js/carousel.js). Track selebar layar
+                     supaya kartu terakhir tampak terpotong di kanan sebagai petunjuk bisa digeser. --}}
+                <div class="relative" data-carousel>
+                    <ul data-carousel-track tabindex="0" aria-label="Daftar mal"
+                        class="-mx-4 flex snap-x snap-mandatory scroll-px-4 gap-4 overflow-x-auto px-4 pb-4 pt-1 outline-none [scrollbar-width:none] focus-visible:ring-2 focus-visible:ring-focus/40 md:-mx-8 md:scroll-px-8 md:px-8 lg:-mx-12 lg:scroll-px-12 lg:px-12 [&::-webkit-scrollbar]:hidden">
+                        @foreach ($mal as $m)
+                            <li class="flex w-[16.5rem] shrink-0 snap-start md:w-[18rem] lg:w-[19rem]">
+                                <x-beranda.kartu-mal :mal="$m" :label-tipe="$labelTipe" :tipe="$tipe" />
+                            </li>
+                        @endforeach
+                    </ul>
+
+                    {{-- Panah (desktop). Disembunyikan otomatis di ujung carousel. --}}
+                    @php
+                        $panah = 'absolute top-1/2 z-10 hidden h-11 w-11 -translate-y-1/2 place-items-center rounded-full bg-surface text-primary shadow-lg ring-1 ring-line hover:bg-surface-alt focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-0 md:grid';
+                    @endphp
+                    <button type="button" data-carousel-prev aria-label="Geser ke kiri" class="{{ $panah }} -left-2 lg:-left-4">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+                    </button>
+                    <button type="button" data-carousel-next aria-label="Geser ke kanan" class="{{ $panah }} -right-2 lg:-right-4">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
+                    </button>
+                </div>
             @endif
         </section>
 
-        {{-- Riwayat --}}
+        {{-- Riwayat (lebar nyaman) --}}
         <div class="md:max-w-xl">
             <x-beranda.riwayat-terakhir :items="$riwayat" :url-semua="route('riwayat')" />
         </div>

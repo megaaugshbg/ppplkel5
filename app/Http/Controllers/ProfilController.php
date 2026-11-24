@@ -33,7 +33,7 @@ class ProfilController extends Controller
     /**
      * Simpan hasil verifikasi SIM. Browser hanya mengirim jenis kelamin hasil
      * OCR; foto, nomor SIM, nama, dan teks OCR tidak pernah sampai ke server.
-     * (OCR di sisi klien bisa dimanipulasi; lihat keterbatasan di CLAUDE.md.)
+     * (OCR di sisi klien bisa dimanipulasi; lihat keterbatasan di laporan.)
      */
     public function simpanVerifikasiSim(Request $request): RedirectResponse
     {
