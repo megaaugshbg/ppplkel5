@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BatalPesananController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\LandingController;
 use App\Http\Controllers\SlotController;
 use App\Http\Controllers\WomanParkingController;
 use App\Http\Controllers\CheckInController;
@@ -14,9 +15,8 @@ use App\Http\Controllers\RiwayatController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-Route::redirect('/', '/login');
-
 Route::middleware('guest')->group(function () {
+    Route::get('/', LandingController::class)->name('landing');
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
     Route::post('/login', [AuthController::class, 'login']);
 
