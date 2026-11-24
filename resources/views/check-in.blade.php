@@ -34,6 +34,13 @@
         </div>
     </section>
 
+    {{-- QR Code booking --}}
+    <section class="space-y-2 rounded-2xl border border-line bg-surface p-4 text-center">
+        <h2 class="text-base font-semibold">QR Code booking</h2>
+        <x-qr-booking :kode="$pesanan['kode']" />
+        <p class="text-xs text-slate-500">Tunjukkan QR ini jika diminta petugas saat masuk.</p>
+    </section>
+
     <section aria-labelledby="judul-booking" class="space-y-3">
         <h2 id="judul-booking" class="text-base font-semibold">Detail booking</h2>
         <x-rincian-pesanan :pesanan="$pesanan" />
