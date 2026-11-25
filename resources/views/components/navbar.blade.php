@@ -7,6 +7,8 @@
     transparan=true (hanya beranda): navbar fixed di atas hero, transparan dengan teks & logo
     cream. Setelah halaman digulir, resources/js/navbar-transparan.js mengubah data-solid
     menjadi "true" sehingga navbar putih solid. Halaman lain: selalu solid (sticky).
+    Menu (desktop) di posisi biasa (sebelah kotak cari) saat solid; saat transparan (paling atas)
+    digeser ke tengah navbar sejauh --geser, yang dihitung navbar-transparan.js.
     Gaya kedua mode memakai varian group-data-[solid=false]/nav.
 --}}
 @props(['transparan' => false])
@@ -74,7 +76,8 @@
         {{-- Menu (desktop) --}}
         {{-- Huruf kapital lewat CSS (uppercase); teks asli tetap "Home" dsb. untuk pembaca layar.
              Semua menu berwarna primary (cream saat transparan); menu aktif diberi garis bawah. --}}
-        <nav aria-label="Menu utama" class="hidden items-center gap-6 text-sm font-bold uppercase tracking-wide md:flex">
+        <nav aria-label="Menu utama" data-menu-utama
+             class="hidden items-center gap-6 text-sm font-bold uppercase tracking-wide md:flex md:transition-[translate] md:duration-500 md:ease-[cubic-bezier(.22,.61,.36,1)] md:group-data-[solid=false]/nav:translate-x-[var(--geser,0px)]">
             @foreach ($menu as $m)
                 <a href="{{ $m['url'] }}" @if ($m['aktif']) aria-current="page" @endif
                    class="rounded-sm border-b-2 pb-0.5 text-primary group-data-[solid=false]/nav:text-on-primary {{ $fokus }} {{ $m['aktif']

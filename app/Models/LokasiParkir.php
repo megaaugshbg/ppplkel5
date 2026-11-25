@@ -29,6 +29,23 @@ class LokasiParkir extends Model
         'Parkir Royal Plaza'       => 'images/mal/RoyalPlaza.jpg',
         'Parkir City of Tomorrow'  => 'images/mal/CITO.jpg',
         'Parkir East Coast Center' => 'images/mal/EastCoast.jpg',
+
+        // Jakarta
+        'Parkir Senayan City'      => 'images/mal/SenCy.jpg',
+        'Parkir Lippo Mall Puri'   => 'images/mal/LippoMallPuri.jpg',
+        'Parkir Grand Indonesia'   => 'images/mal/GrandIndonesia.jpg',
+        // Bogor
+        'Parkir AEON Mall Sentul City' => 'images/mal/AeonMallSentul.jpg',
+        'Parkir Botani Square'     => 'images/mal/BotaniSquare.jpg',
+        // Bandung (ekstensi ParisVanJava huruf besar, harus persis sama di server Linux)
+        'Parkir Paris Van Java'    => 'images/mal/ParisVanJava.JPG',
+        'Parkir Trans Studio Mall' => 'images/mal/TSMBandung.jpg',
+        // Yogyakarta
+        'Parkir Malioboro Mall'    => 'images/mal/MalioboroMall.jpg',
+        'Parkir Jogja City Mall'   => 'images/mal/JCM.jpg',
+        // Malang
+        'Parkir Malang Town Square' => 'images/mal/Matos.jpg',
+        'Parkir Mall Olympic Garden' => 'images/mal/OlympicGarden.jpg',
     ];
 
     protected $table = 'lokasi_parkir';
