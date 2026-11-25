@@ -46,18 +46,14 @@
                     <span class="shrink-0 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">Sedang parkir</span>
                 </div>
                 <p class="truncate text-base font-semibold">{{ $pesanan['lokasi'] }}</p>
-                <p class="text-xs text-slate-500">{{ $pesanan['tipe'] }} &middot; masuk {{ $pesanan['waktu_checkin'] ?? '-' }} WIB</p>
+                <p class="text-xs text-slate-500">{{ $pesanan['tipe'] }}</p>
             </div>
         </section>
 
         <x-rincian-pesanan :pesanan="$pesanan">
             <div class="flex justify-between gap-4 p-3">
-                <dt class="text-slate-500">Waktu masuk</dt>
-                <dd class="text-right">{{ $pesanan['waktu_checkin'] ?? '-' }} WIB</dd>
-            </div>
-            <div class="flex justify-between gap-4 p-3">
                 <dt class="text-slate-500">Dibayar</dt>
-                <dd class="text-right">Rp {{ number_format($pesanan['total'] ?? 0, 0, ',', '.') }} ({{ $pesanan['durasi'] ?? '-' }} jam)</dd>
+                <dd class="text-right">Rp {{ number_format($pesanan['total'] ?? 0, 0, ',', '.') }}</dd>
             </div>
         </x-rincian-pesanan>
 

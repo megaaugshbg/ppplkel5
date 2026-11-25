@@ -30,7 +30,7 @@
         <span class="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-primary text-lg font-bold text-on-primary">{{ $pesanan['slot'] }}</span>
         <div class="min-w-0">
             <p class="truncate text-base font-semibold">{{ $pesanan['lokasi'] }}</p>
-            <p class="text-xs text-slate-500">{{ $pesanan['tipe'] }} &middot; masuk {{ $pesanan['waktu_checkin'] ?? '-' }} WIB</p>
+            <p class="text-xs text-slate-500">{{ $pesanan['tipe'] }}</p>
         </div>
     </section>
 

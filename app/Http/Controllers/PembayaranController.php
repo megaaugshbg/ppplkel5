@@ -8,8 +8,9 @@ use Illuminate\Http\Request;
 // Use case Lakukan Pembayaran (3.4.1)
 class PembayaranController extends Controller
 {
-    // Pilihan lama parkir yang dibayar di awal (jam)
-    public const DURASI = [1, 2, 3, 4, 5, 6];
+    // Pemesanan dibayar untuk 1 jam (tarif per jam). Penyewa tidak lagi memilih lama parkir.
+    // Nilai 'durasi' tetap disimpan = 1 karena Booking, Check In, dan Check-out masih membacanya.
+    public const JAM_DIBAYAR = 1;
 
     // Form Pembayaran: tampilkan rincian tagihan dari Booking
     public function index()
@@ -25,7 +26,7 @@ class PembayaranController extends Controller
 
         return view('pembayaran', [
             'pesanan' => $pesanan,
-            'durasi'  => self::DURASI,
+            'total'   => $pesanan['tarif'] * self::JAM_DIBAYAR,
         ]);
     }
 
@@ -42,11 +43,8 @@ class PembayaranController extends Controller
         }
 
         $data = $request->validate([
-            'durasi' => ['required', 'integer', 'in:' . implode(',', self::DURASI)],
             'metode' => ['required', 'in:QRIS'],
         ], [
-            'durasi.required' => 'Pilih lama parkir terlebih dahulu.',
-            'durasi.in'       => 'Lama parkir tidak valid.',
             'metode.required' => 'Pilih metode pembayaran terlebih dahulu.',
             'metode.in'       => 'Metode pembayaran tidak tersedia.',
         ]);
@@ -56,8 +54,8 @@ class PembayaranController extends Controller
             return back()->withInput()->with('error', 'Pembayaran gagal diproses. Silakan coba lagi.');
         }
 
-        $pesanan['durasi'] = (int) $data['durasi'];
-        $pesanan['total'] = $pesanan['tarif'] * $pesanan['durasi'];
+        $pesanan['durasi'] = self::JAM_DIBAYAR;
+        $pesanan['total'] = $pesanan['tarif'] * self::JAM_DIBAYAR;
         $pesanan['metode'] = $data['metode'];
         $pesanan['no_transaksi'] = 'TRX-' . now('Asia/Jakarta')->format('ymdHis');
         $pesanan['waktu_bayar'] = now('Asia/Jakarta')->format('d-m-Y H:i');

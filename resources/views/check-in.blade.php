@@ -30,7 +30,7 @@
         <div class="min-w-0">
             <p class="text-xs text-slate-500">Slot kamu</p>
             <p class="truncate text-base font-semibold">{{ $pesanan['lokasi'] }}</p>
-            <p class="text-xs text-slate-500">{{ $pesanan['tipe'] }} &middot; dibayar untuk {{ $pesanan['durasi'] }} jam</p>
+            <p class="text-xs text-slate-500">{{ $pesanan['tipe'] }}</p>
         </div>
     </section>
 

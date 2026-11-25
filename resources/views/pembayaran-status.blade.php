@@ -28,10 +28,6 @@
             <dd class="text-right">{{ $pesanan['slot'] }} ({{ $pesanan['tipe'] }})</dd>
         </div>
         <div class="flex justify-between gap-4 p-3">
-            <dt class="text-slate-500">Lama parkir</dt>
-            <dd class="text-right">{{ $pesanan['durasi'] }} jam</dd>
-        </div>
-        <div class="flex justify-between gap-4 p-3">
             <dt class="text-slate-500">Metode</dt>
             <dd class="text-right">{{ $pesanan['metode'] }}</dd>
         </div>

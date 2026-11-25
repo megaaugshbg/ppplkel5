@@ -45,22 +45,6 @@
     <form method="POST" action="{{ route('pembayaran.bayar') }}" class="space-y-5">
         @csrf
 
-        {{-- Lama parkir --}}
-        <fieldset class="space-y-3">
-            <legend class="text-base font-semibold">Lama parkir</legend>
-            <div class="grid grid-cols-3 gap-2 sm:grid-cols-6">
-                @foreach ($durasi as $jam)
-                    <label class="cursor-pointer">
-                        <input type="radio" name="durasi" value="{{ $jam }}" class="peer sr-only"
-                               @checked((int) old('durasi', 2) === $jam)>
-                        <span class="block rounded-xl border border-line bg-surface py-2.5 text-center text-sm font-medium peer-checked:border-primary peer-checked:bg-primary-soft peer-checked:font-semibold peer-focus-visible:outline-2 peer-focus-visible:outline-focus hover:bg-surface-alt">
-                            {{ $jam }} jam
-                        </span>
-                    </label>
-                @endforeach
-            </div>
-        </fieldset>
-
         {{-- Metode pembayaran --}}
         <fieldset class="space-y-3">
             <legend class="text-base font-semibold">Metode pembayaran</legend>
@@ -84,8 +68,8 @@
 
         {{-- Total --}}
         <div class="flex items-center justify-between rounded-2xl bg-surface-alt px-4 py-3">
-            <span class="text-sm text-slate-600">Total biaya (<span id="teks-durasi">{{ old('durasi', 2) }}</span> jam)</span>
-            <strong id="teks-total" class="text-lg">Rp {{ number_format($pesanan['tarif'] * old('durasi', 2), 0, ',', '.') }}</strong>
+            <span class="text-sm text-slate-600">Total biaya</span>
+            <strong class="text-lg">Rp {{ number_format($total, 0, ',', '.') }}</strong>
         </div>
 
         <label class="flex items-center gap-2 text-xs text-slate-500">
@@ -111,17 +95,6 @@
 
 @push('scripts')
 <script>
-    // Hitung ulang total saat lama parkir diganti
-    const tarif = {{ (int) $pesanan['tarif'] }};
-    const rupiah = n => 'Rp ' + n.toLocaleString('id-ID');
-
-    document.querySelectorAll('input[name="durasi"]').forEach(r => {
-        r.addEventListener('change', () => {
-            document.getElementById('teks-durasi').textContent = r.value;
-            document.getElementById('teks-total').textContent = rupiah(tarif * r.value);
-        });
-    });
-
     // Hitung mundur batas bayar. Saat habis, tombol bayar dimatikan lalu halaman
     // dimuat ulang; server yang membatalkan pesanan dan mengarahkan ke beranda.
     let sisa = {{ (int) ($pesanan['sisa_detik'] ?? -1) }};

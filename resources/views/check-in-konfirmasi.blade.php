@@ -39,10 +39,6 @@
             <dd class="text-right">{{ $pesanan['slot'] }} ({{ $pesanan['tipe'] }})</dd>
         </div>
         <div class="flex justify-between gap-4 p-3">
-            <dt class="text-slate-500">Waktu masuk</dt>
-            <dd class="text-right font-medium">{{ $pesanan['waktu_checkin'] }} WIB</dd>
-        </div>
-        <div class="flex justify-between gap-4 p-3">
             <dt class="text-slate-500">Status slot</dt>
             <dd class="text-right"><span class="rounded-full bg-primary-soft px-2.5 py-0.5 text-xs font-semibold text-primary">Terisi</span></dd>
         </div>
