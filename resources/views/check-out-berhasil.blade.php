@@ -15,16 +15,8 @@
     </div>
 
     {{-- Ringkasan utama --}}
-    <div class="mb-4 grid grid-cols-3 gap-2 text-center">
-        <div class="rounded-2xl border border-line bg-surface p-3">
-            <p class="text-[11px] text-slate-500">Waktu keluar</p>
-            <p class="mt-0.5 text-sm font-bold">{{ \Illuminate\Support\Str::after($struk['waktu_keluar'], ' ') }}</p>
-        </div>
-        <div class="rounded-2xl border border-line bg-surface p-3">
-            <p class="text-[11px] text-slate-500">Durasi parkir</p>
-            <p class="mt-0.5 text-sm font-bold">{{ $struk['durasi_aktual'] }} jam</p>
-        </div>
-        <div class="rounded-2xl border border-line bg-surface p-3">
+    <div class="mb-4 text-center">
+        <div class="mx-auto rounded-2xl border border-line bg-surface p-3">
             <p class="text-[11px] text-slate-500">Total biaya</p>
             <p class="mt-0.5 text-sm font-bold">Rp {{ number_format($struk['total_biaya'], 0, ',', '.') }}</p>
         </div>

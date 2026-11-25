@@ -34,9 +34,6 @@
         </div>
     </section>
 
-    {{-- Batas waktu parkir --}}
-    <x-batas-waktu :pesanan="$pesanan" />
-
     {{-- QR Code booking untuk check-out --}}
     <section class="space-y-2 rounded-2xl border border-line bg-surface p-4 text-center">
         <h2 class="text-base font-semibold">QR Code check-out</h2>

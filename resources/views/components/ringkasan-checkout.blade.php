@@ -2,7 +2,6 @@
     Ringkasan check-out (halaman Check-out Berhasil & Struk).
     $struk: booking selesai terbaru milik pengguna (PesananSesi::strukTerakhir), bentuk array pesanan.
     Biaya sudah dibayar di muka: Total biaya parkir = jumlah yang sudah dibayar.
-    Durasi aktual hanya informasi; tidak ada pelunasan atau pengembalian.
     $lengkap = true (struk): tambah alamat, metode, no. transaksi, dan data charger EV.
 --}}
 @props(['struk', 'lengkap' => false])
@@ -17,10 +16,6 @@
         $lengkap ? $baris('Alamat', $struk['alamat'] ?? '-') : null,
         $baris('Slot', $struk['slot']),
         $baris('Tipe parkir', $struk['tipe']),
-        $baris('Waktu masuk', ($struk['waktu_checkin'] ?? '-') . ' WIB'),
-        $baris('Waktu keluar', $struk['waktu_keluar'] . ' WIB'),
-        $baris('Durasi parkir', $struk['durasi_aktual'] . ' jam'),
-        $baris('Durasi dibayar', ($struk['durasi'] ?? '-') . ' jam'),
         $lengkap && ! empty($struk['metode']) ? $baris('Metode pembayaran', $struk['metode']) : null,
         $lengkap && ! empty($struk['no_transaksi']) ? $baris('No. transaksi', $struk['no_transaksi']) : null,
     ]);
@@ -59,10 +54,3 @@
         </div>
     </dl>
 </div>
-
-@if (($struk['melebihi_jam'] ?? 0) > 0)
-    <p role="note" class="mt-3 flex items-start gap-2 rounded-xl border border-line bg-primary-soft px-3 py-2.5 text-xs font-medium text-primary">
-        <svg class="mt-px h-4 w-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg>
-        Melebihi durasi yang dibayar {{ $struk['melebihi_jam'] }} jam
-    </p>
-@endif
